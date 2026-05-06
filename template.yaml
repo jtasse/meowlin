@@ -23,6 +23,9 @@ Resources:
       FunctionName: meowlin-request-upload-url
       CodeUri: src/request-upload-url/
       Handler: app.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref MeowlinClipsTable
       Events:
         RequestUploadUrl:
           Type: HttpApi

@@ -9,6 +9,14 @@ Globals:
     Runtime: nodejs22.x
 
 Resources:
+  MeowlinHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: "$default"
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 5
+        ThrottlingRateLimit: 2
+
   RequestUploadUrlFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -19,10 +27,23 @@ Resources:
         RequestUploadUrl:
           Type: HttpApi
           Properties:
+            ApiId: !Ref MeowlinHttpApi
             Path: /uploads
             Method: POST
+
+  MeowlinClipsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: MeowlinClips
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: clipId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: clipId
+          KeyType: HASH
 
 Outputs:
   MeowlinApiUrl:
     Description: API Gateway endpoint URL
-    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/"
+    Value: !Sub "https://${MeowlinHttpApi}.execute-api.${AWS::Region}.amazonaws.com/"

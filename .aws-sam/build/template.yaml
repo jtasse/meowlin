@@ -6,6 +6,16 @@ Globals:
     Timeout: 5
     MemorySize: 128
     Runtime: nodejs22.x
+RawAudioBucket:
+  Type: AWS::S3::Bucket
+  Properties:
+    BucketName:
+      Fn::Sub: meowlin-raw-audio-${AWS::AccountId}-${AWS::Region}
+    PublicAccessBlockConfiguration:
+      BlockPublicAcls: true
+      BlockPublicPolicy: true
+      IgnorePublicAcls: true
+      RestrictPublicBuckets: true
 Resources:
   MeowlinHttpApi:
     Type: AWS::Serverless::HttpApi
@@ -24,6 +34,15 @@ Resources:
       - DynamoDBCrudPolicy:
           TableName:
             Ref: MeowlinClipsTable
+      - S3WritePolicy:
+          BucketName:
+            Ref: RawAudioBucket
+      Environment:
+        Variables:
+          CLIPS_TABLE_NAME:
+            Ref: MeowlinClipsTable
+          RAW_AUDIO_BUCKET_NAME:
+            Ref: RawAudioBucket
       Events:
         RequestUploadUrl:
           Type: HttpApi

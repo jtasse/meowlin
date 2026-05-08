@@ -2,7 +2,8 @@ version = 0.1
 
 [default.deploy.parameters]
 stack_name = "meowlin"
-resolve_s3 = true
+resolve_s3 = false
+s3_bucket = "jtj-meowlin-raw-audio"
 s3_prefix = "meowlin"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"

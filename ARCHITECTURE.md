@@ -230,6 +230,7 @@ This split is intentional and should be documented as polyglot serverless design
 ## SAM / Infrastructure Approach
 
 - `template.yaml` is the source of truth for AWS resources.
+- The root `template.yaml` is the only source template. Files under `.aws-sam/build/` are generated artifacts and should not be edited directly.
 - Deploy with SAM:
 
 ```powershell
@@ -245,6 +246,31 @@ sam local start-api
 
 - GitHub is source control only unless CI/CD is explicitly added later.
 - SAM deploy uses local files, not the remote GitHub state.
+
+## Environment Strategy (Current vs Future)
+
+Current state:
+
+- The project currently uses one deployed AWS stack/account.
+- API stages (`dev`, `prod`) provide route/URL and workflow separation, not full infrastructure isolation.
+- This is still useful for local-first testing and separate Postman environments.
+
+What stage separation does now:
+
+- Lets local development default to `dev` while keeping `prod` invokable via parameter override.
+- Supports cleaner client configuration (`/dev/uploads` vs `/prod/uploads`).
+- Encourages safer release habits before adding full multi-stack environments.
+
+What it does not do yet:
+
+- It does not create separate DynamoDB tables, S3 buckets, IAM policies, or spend boundaries by itself.
+- It does not provide true blast-radius isolation.
+
+Future path to true environment isolation:
+
+- Deploy separate stacks (for example `meowlin-dev` and `meowlin-prod`) and/or separate AWS accounts.
+- Parameterize resource names by environment (for example `MeowlinClips-dev` and `MeowlinClips-prod`).
+- Keep separate Postman environments mapped to each deployed base URL.
 
 ## Cost and Abuse Controls
 

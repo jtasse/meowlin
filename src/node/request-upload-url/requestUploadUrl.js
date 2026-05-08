@@ -4,7 +4,11 @@ const { DynamoDBDocumentClient, PutCommand } = require("@aws-sdk/lib-dynamodb")
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3")
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner")
 
-const dynamoClient = new DynamoDBClient({})
+const REGION = process.env.AWS_REGION || "us-east-1"
+const dynamoClient = new DynamoDBClient({
+	region: REGION,
+	maxAttempts: 1, // Fail fast to reduce retries, latency, and memory churn.
+})
 const docClient = DynamoDBDocumentClient.from(dynamoClient)
 const s3Client = new S3Client({})
 
@@ -14,7 +18,32 @@ const UPLOAD_URL_EXPIRES_IN_SECONDS = 900 // 15 minutes
 const S3_KEY_PREFIX = "uploads"
 
 exports.handler = async (event) => {
-	console.log("Received event:", JSON.stringify(event, null, 2))
+	console.log(
+		"Request received",
+		JSON.stringify({
+			requestId: event?.requestContext?.requestId,
+			routeKey: event?.routeKey,
+			method: event?.requestContext?.http?.method,
+			path: event?.rawPath,
+		}),
+	)
+
+	if (!CLIPS_TABLE_NAME || !RAW_AUDIO_BUCKET_NAME) {
+		console.error(
+			"Missing required environment configuration",
+			JSON.stringify({
+				hasClipsTableName: Boolean(CLIPS_TABLE_NAME),
+				hasRawAudioBucketName: Boolean(RAW_AUDIO_BUCKET_NAME),
+			}),
+		)
+		return {
+			statusCode: 500,
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				message: "Server configuration error.",
+			}),
+		}
+	}
 
 	if (!event.body) {
 		return {
@@ -89,7 +118,14 @@ exports.handler = async (event) => {
 			}),
 		}
 	} catch (error) {
-		console.error("Error processing request:", error)
+		console.error(
+			"Error processing request",
+			JSON.stringify({
+				name: error?.name,
+				message: error?.message,
+				requestId: event?.requestContext?.requestId,
+			}),
+		)
 		if (error.name === "ConditionalCheckFailedException") {
 			return {
 				statusCode: 409, // Conflict

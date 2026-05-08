@@ -1,9 +1,9 @@
 {
-    "name": "hello_world",
+    "name": "meowlin",
     "version": "1.0.0",
-    "description": "hello world sample for NodeJS",
-    "main": "app.js",
-    "repository": "https://github.com/awslabs/aws-sam-cli/tree/develop/samcli/local/init/templates/cookiecutter-aws-sam-hello-nodejs",
+    "description": "Meowlin - AWS Serverless Cat ID Demo",
+    "main": "src/node/request-upload-url/requestUploadUrl.js",
+    "repository": "https://github.com/jtj-dev/meowlin",
     "author": "SAM CLI",
     "license": "MIT",
     "scripts": {
@@ -12,14 +12,12 @@
         "compile": "tsc",
         "test": "npm run compile && npm run unit"
     },
-    "dependencies": {
+    "devDependencies": {
         "@aws-sdk/client-dynamodb": "^3.1044.0",
         "@aws-sdk/client-s3": "^3.1045.0",
         "@aws-sdk/lib-dynamodb": "^3.1044.0",
         "@aws-sdk/s3-request-presigner": "^3.1045.0",
-        "esbuild": "^0.14.14"
-    },
-    "devDependencies": {
+        "esbuild": "^0.21.0",
         "@types/aws-lambda": "^8.10.92",
         "@types/node": "^20.5.7",
         "@typescript-eslint/eslint-plugin": "^5.10.2",

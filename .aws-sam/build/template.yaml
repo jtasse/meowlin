@@ -1,35 +1,64 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Meowlin serverless demo application
+Description: Meowlin - Serverless Cat ID Demo
+Parameters:
+  PrimaryStageName:
+    Type: String
+    Default: dev
+    AllowedValues:
+    - dev
+    - prod
+    Description: Primary API stage (also used by sam local start-api).
+Conditions:
+  IsPrimaryDev:
+    Fn::Equals:
+    - Ref: PrimaryStageName
+    - dev
+  IsPrimaryProd:
+    Fn::Equals:
+    - Ref: PrimaryStageName
+    - prod
 Globals:
   Function:
-    Timeout: 5
+    Timeout: 30
     MemorySize: 128
     Runtime: nodejs22.x
-RawAudioBucket:
-  Type: AWS::S3::Bucket
-  Properties:
-    BucketName:
-      Fn::Sub: meowlin-raw-audio-${AWS::AccountId}-${AWS::Region}
-    PublicAccessBlockConfiguration:
-      BlockPublicAcls: true
-      BlockPublicPolicy: true
-      IgnorePublicAcls: true
-      RestrictPublicBuckets: true
+    Architectures:
+    - arm64
 Resources:
   MeowlinHttpApi:
     Type: AWS::Serverless::HttpApi
     Properties:
-      StageName: $default
-      DefaultRouteSettings:
-        ThrottlingBurstLimit: 5
-        ThrottlingRateLimit: 2
+      StageName:
+        Ref: PrimaryStageName
+  MeowlinHttpApiDevStage:
+    Condition: IsPrimaryProd
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId:
+        Ref: MeowlinHttpApi
+      StageName: dev
+      AutoDeploy: true
+  MeowlinHttpApiProdStage:
+    Condition: IsPrimaryDev
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId:
+        Ref: MeowlinHttpApi
+      StageName: prod
+      AutoDeploy: true
   RequestUploadUrlFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: meowlin-request-upload-url
+      Handler: src/node/request-upload-url/requestUploadUrl.handler
       CodeUri: RequestUploadUrlFunction
-      Handler: app.handler
+      Environment:
+        Variables:
+          NODE_OPTIONS: --v8-pool-size=1
+          CLIPS_TABLE_NAME: MeowlinClips
+          RAW_AUDIO_BUCKET_NAME:
+            Ref: RawAudioBucket
       Policies:
       - DynamoDBCrudPolicy:
           TableName:
@@ -37,35 +66,69 @@ Resources:
       - S3WritePolicy:
           BucketName:
             Ref: RawAudioBucket
-      Environment:
-        Variables:
-          CLIPS_TABLE_NAME:
-            Ref: MeowlinClipsTable
-          RAW_AUDIO_BUCKET_NAME:
-            Ref: RawAudioBucket
+      - Statement:
+        - Effect: Allow
+          Action:
+          - s3:PutObject
+          - s3:PutObjectAcl
+          Resource:
+            Fn::Join:
+            - ''
+            - - 'arn:'
+              - Ref: AWS::Partition
+              - ':s3:::'
+              - Ref: RawAudioBucket
+              - /*
       Events:
-        RequestUploadUrl:
+        Uploads:
           Type: HttpApi
           Properties:
-            ApiId:
-              Ref: MeowlinHttpApi
             Path: /uploads
             Method: POST
+            ApiId:
+              Ref: MeowlinHttpApi
     Metadata:
       SamResourceId: RequestUploadUrlFunction
   MeowlinClipsTable:
-    Type: AWS::DynamoDB::Table
+    Type: AWS::Serverless::SimpleTable
     Properties:
       TableName: MeowlinClips
-      BillingMode: PAY_PER_REQUEST
-      AttributeDefinitions:
-      - AttributeName: clipId
-        AttributeType: S
-      KeySchema:
-      - AttributeName: clipId
-        KeyType: HASH
+      PrimaryKey:
+        Name: clipId
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+  RawAudioBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: jtj-meowlin-raw-audio
 Outputs:
-  MeowlinApiUrl:
-    Description: API Gateway endpoint URL
+  MeowlinHttpApiUrl:
+    Description: API Gateway HTTP API endpoint URL
     Value:
-      Fn::Sub: https://${MeowlinHttpApi}.execute-api.${AWS::Region}.amazonaws.com/
+      Fn::GetAtt:
+      - MeowlinHttpApi
+      - ApiEndpoint
+  MeowlinHttpApiDevUploadsUrl:
+    Description: dev stage URL for uploads endpoint
+    Value:
+      Fn::Sub: ${MeowlinHttpApi.ApiEndpoint}/dev/uploads
+  MeowlinHttpApiProdUploadsUrl:
+    Description: prod stage URL for uploads endpoint
+    Value:
+      Fn::Sub: ${MeowlinHttpApi.ApiEndpoint}/prod/uploads
+  RequestUploadUrlFunctionArn:
+    Description: ARN of the RequestUploadUrl Lambda Function
+    Value:
+      Fn::GetAtt:
+      - RequestUploadUrlFunction
+      - Arn
+  MeowlinClipsTableName:
+    Description: DynamoDB Table Name for MeowlinClips
+    Value:
+      Ref: MeowlinClipsTable
+  RawAudioBucketName:
+    Description: S3 Bucket Name for Raw Audio Uploads
+    Value:
+      Ref: RawAudioBucket

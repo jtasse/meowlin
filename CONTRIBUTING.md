@@ -179,6 +179,14 @@ fileName: {clientClipId}.mp3
 
 Use SAM as the infrastructure source of truth.
 
+Environment/stage policy for this repository:
+
+- Treat the root `template.yaml` as canonical; do not edit generated files in `.aws-sam/build/`.
+- `dev` and `prod` API stages currently provide URL/workflow separation only.
+- Do not describe current stages as fully isolated environments unless resources are split by stack/account.
+- Keep local testing defaulted to `dev`; explicitly opt into `prod` when needed.
+- Keep separate Postman environments for dev and prod base URLs.
+
 Common commands:
 
 ```powershell
@@ -186,6 +194,18 @@ sam validate
 sam build
 sam local start-api
 sam deploy
+```
+
+Start local API with default stage behavior:
+
+```powershell
+sam local start-api
+```
+
+Invoke local API as prod when needed:
+
+```powershell
+sam local start-api --parameter-overrides PrimaryStageName=prod
 ```
 
 If local API testing behaves unexpectedly, stop and restart `sam local start-api` after rebuilding.

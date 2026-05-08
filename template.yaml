@@ -2,29 +2,60 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: Meowlin - Serverless Cat ID Demo
 
+Parameters:
+  PrimaryStageName:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - prod
+    Description: Primary API stage (also used by sam local start-api).
+
+Conditions:
+  IsPrimaryDev: !Equals [!Ref PrimaryStageName, dev]
+  IsPrimaryProd: !Equals [!Ref PrimaryStageName, prod]
+
 Globals:
   Function:
     Timeout: 30
     MemorySize: 128
-    Runtime: nodejs20.x # Using nodejs20.x as nodejs22.x might not be available in all regions yet
+    Runtime: nodejs22.x
     Architectures:
-      - x86_64
+      - arm64
 
 Resources:
   MeowlinHttpApi:
     Type: AWS::Serverless::HttpApi
     Properties:
-      StageName: Prod
+      StageName: !Ref PrimaryStageName
+
+  MeowlinHttpApiDevStage:
+    Condition: IsPrimaryProd
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref MeowlinHttpApi
+      StageName: dev
+      AutoDeploy: true
+
+  MeowlinHttpApiProdStage:
+    Condition: IsPrimaryDev
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref MeowlinHttpApi
+      StageName: prod
+      AutoDeploy: true
 
   RequestUploadUrlFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: meowlin-request-upload-url
-      Handler: src/handlers/requestUploadUrl.handler
+      Handler: src/node/request-upload-url/requestUploadUrl.handler
       CodeUri: .
       Environment:
         Variables:
-          CLIPS_TABLE_NAME: !Ref MeowlinClipsTable
+          NODE_OPTIONS: "--v8-pool-size=1"
+          # Use explicit table name so local SAM resolution doesn't pass logical ID.
+          CLIPS_TABLE_NAME: MeowlinClips
           RAW_AUDIO_BUCKET_NAME: !Ref RawAudioBucket
       Policies:
         - DynamoDBCrudPolicy:
@@ -50,7 +81,6 @@ Resources:
             Path: /uploads
             Method: POST
             ApiId: !Ref MeowlinHttpApi
-
   MeowlinClipsTable:
     Type: AWS::Serverless::SimpleTable
     Properties:
@@ -65,12 +95,18 @@ Resources:
   RawAudioBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub meowlin-raw-audio-${AWS::AccountId}-${AWS::Region} # Unique bucket name
+      BucketName: jtj-meowlin-raw-audio
 
 Outputs:
   MeowlinHttpApiUrl:
     Description: "API Gateway HTTP API endpoint URL"
     Value: !GetAtt MeowlinHttpApi.ApiEndpoint
+  MeowlinHttpApiDevUploadsUrl:
+    Description: "dev stage URL for uploads endpoint"
+    Value: !Sub "${MeowlinHttpApi.ApiEndpoint}/dev/uploads"
+  MeowlinHttpApiProdUploadsUrl:
+    Description: "prod stage URL for uploads endpoint"
+    Value: !Sub "${MeowlinHttpApi.ApiEndpoint}/prod/uploads"
   RequestUploadUrlFunctionArn:
     Description: "ARN of the RequestUploadUrl Lambda Function"
     Value: !GetAtt RequestUploadUrlFunction.Arn

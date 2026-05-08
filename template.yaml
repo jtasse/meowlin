@@ -1,68 +1,82 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: Meowlin serverless demo application
+Description: Meowlin - Serverless Cat ID Demo
 
 Globals:
   Function:
-    Timeout: 5
+    Timeout: 30
     MemorySize: 128
-    Runtime: nodejs22.x
-
-RawAudioBucket:
-  Type: AWS::S3::Bucket
-  Properties:
-    BucketName: !Sub "meowlin-raw-audio-${AWS::AccountId}-${AWS::Region}"
-    PublicAccessBlockConfiguration:
-      BlockPublicAcls: true
-      BlockPublicPolicy: true
-      IgnorePublicAcls: true
-      RestrictPublicBuckets: true
+    Runtime: nodejs20.x # Using nodejs20.x as nodejs22.x might not be available in all regions yet
+    Architectures:
+      - x86_64
 
 Resources:
   MeowlinHttpApi:
     Type: AWS::Serverless::HttpApi
     Properties:
-      StageName: "$default"
-      DefaultRouteSettings:
-        ThrottlingBurstLimit: 5
-        ThrottlingRateLimit: 2
+      StageName: Prod
 
   RequestUploadUrlFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: meowlin-request-upload-url
-      CodeUri: src/request-upload-url/
-      Handler: app.handler
+      Handler: src/handlers/requestUploadUrl.handler
+      CodeUri: .
+      Environment:
+        Variables:
+          CLIPS_TABLE_NAME: !Ref MeowlinClipsTable
+          RAW_AUDIO_BUCKET_NAME: !Ref RawAudioBucket
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref MeowlinClipsTable
         - S3WritePolicy:
             BucketName: !Ref RawAudioBucket
-      Environment:
-        Variables:
-          CLIPS_TABLE_NAME: !Ref MeowlinClipsTable
-          RAW_AUDIO_BUCKET_NAME: !Ref RawAudioBucket
+        - Statement: # Policy for S3 presigning
+            - Effect: Allow
+              Action:
+                - s3:PutObject
+                - s3:PutObjectAcl # Required if you need to set ACLs, otherwise can be removed
+              Resource: !Join
+                - ""
+                - - "arn:"
+                  - !Ref "AWS::Partition"
+                  - ":s3:::"
+                  - !Ref RawAudioBucket
+                  - "/*"
       Events:
-        RequestUploadUrl:
+        Uploads:
           Type: HttpApi
           Properties:
-            ApiId: !Ref MeowlinHttpApi
             Path: /uploads
             Method: POST
+            ApiId: !Ref MeowlinHttpApi
 
   MeowlinClipsTable:
-    Type: AWS::DynamoDB::Table
+    Type: AWS::Serverless::SimpleTable
     Properties:
       TableName: MeowlinClips
-      BillingMode: PAY_PER_REQUEST
-      AttributeDefinitions:
-        - AttributeName: clipId
-          AttributeType: S
-      KeySchema:
-        - AttributeName: clipId
-          KeyType: HASH
+      PrimaryKey:
+        Name: clipId
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+  RawAudioBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub meowlin-raw-audio-${AWS::AccountId}-${AWS::Region} # Unique bucket name
 
 Outputs:
-  MeowlinApiUrl:
-    Description: API Gateway endpoint URL
-    Value: !Sub "https://${MeowlinHttpApi}.execute-api.${AWS::Region}.amazonaws.com/"
+  MeowlinHttpApiUrl:
+    Description: "API Gateway HTTP API endpoint URL"
+    Value: !GetAtt MeowlinHttpApi.ApiEndpoint
+  RequestUploadUrlFunctionArn:
+    Description: "ARN of the RequestUploadUrl Lambda Function"
+    Value: !GetAtt RequestUploadUrlFunction.Arn
+  MeowlinClipsTableName:
+    Description: "DynamoDB Table Name for MeowlinClips"
+    Value: !Ref MeowlinClipsTable
+  RawAudioBucketName:
+    Description: "S3 Bucket Name for Raw Audio Uploads"
+    Value: !Ref RawAudioBucket

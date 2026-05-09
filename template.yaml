@@ -10,6 +10,12 @@ Parameters:
       - dev
       - prod
     Description: Primary API stage (also used by sam local start-api).
+  RawAudioBucketName:
+    Type: String
+    Default: jtj-meowlin-raw-audio
+    Description: >
+      Globally unique S3 bucket name for raw uploads. Passed to the clip-processing queue
+      policy SourceArn without depending on the bucket resource (avoids create ordering cycles).
 
 Conditions:
   IsPrimaryDev: !Equals [!Ref PrimaryStageName, dev]
@@ -81,6 +87,35 @@ Resources:
             Path: /uploads
             Method: POST
             ApiId: !Ref MeowlinHttpApi
+
+  MeowlinClipProcessingQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: MeowlinClipProcessing
+      MessageRetentionPeriod: 1209600 # 14 days
+      VisibilityTimeout: 60
+
+  MeowlinClipProcessingQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowRawAudioBucketNotifications
+            Effect: Allow
+            Principal:
+              Service: s3.amazonaws.com
+            Action:
+              - sqs:SendMessage
+            Resource: !GetAtt MeowlinClipProcessingQueue.Arn
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Sub arn:${AWS::Partition}:s3:::${RawAudioBucketName}
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+      Queues:
+        - !Ref MeowlinClipProcessingQueue
+
   MeowlinClipsTable:
     Type: AWS::Serverless::SimpleTable
     Properties:
@@ -94,8 +129,21 @@ Resources:
 
   RawAudioBucket:
     Type: AWS::S3::Bucket
+    DependsOn:
+      - MeowlinClipProcessingQueuePolicy
     Properties:
-      BucketName: jtj-meowlin-raw-audio
+      BucketName: !Ref RawAudioBucketName
+      NotificationConfiguration:
+        QueueConfigurations:
+          - Event: s3:ObjectCreated:*
+            Queue: !GetAtt MeowlinClipProcessingQueue.Arn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: uploads/
+                  - Name: suffix
+                    Value: .mp3
 
 Outputs:
   MeowlinHttpApiUrl:
@@ -116,3 +164,11 @@ Outputs:
   RawAudioBucketName:
     Description: "S3 Bucket Name for Raw Audio Uploads"
     Value: !Ref RawAudioBucket
+
+  ClipProcessingQueueUrl:
+    Description: "SQS queue URL for S3 upload processing events"
+    Value: !Ref MeowlinClipProcessingQueue
+
+  ClipProcessingQueueArn:
+    Description: "SQS queue ARN for S3 upload processing events"
+    Value: !GetAtt MeowlinClipProcessingQueue.Arn

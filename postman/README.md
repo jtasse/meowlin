@@ -25,16 +25,33 @@ Runtime variables populated by scripts:
 - `s3Key`
 - `uploadUrl`
 
+## SAM local
+
+When running `sam local start-api`, use the root path with stage variables:
+
+- Set `base_url` to `http://127.0.0.1:3000`
+- Use `{{base_url}}/{{stage_name}}/uploads` in requests
+
+Alternatively, use the root endpoint directly:
+
+- `http://127.0.0.1:3000/uploads`
+
+If you need explicit `/dev/` and `/prod/` stage prefixes locally, use:
+
+- `sam local start-api --stage dev`
+- `sam local start-api --stage prod`
+
 ## Request Flow
 
 1. **Request Upload URL**
+
    - Method: `POST`
    - URL: `{{base_url}}/{{stage_name}}/uploads`
    - Header: `Content-Type: application/json`
    - Body example:
      ```json
      {
-       "clientClipId": "0000000001"
+     	"clientClipId": "0000000001"
      }
      ```
 
@@ -52,29 +69,29 @@ Place this script in **Scripts -> Post-res** for the upload URL request:
 
 ```javascript
 pm.test("POST /uploads returns upload metadata", function () {
-    pm.response.to.have.status(200);
+	pm.response.to.have.status(200)
 
-    const response = pm.response.json();
+	const response = pm.response.json()
 
-    pm.expect(response.clipId).to.exist;
-    pm.expect(response.clientClipId).to.exist;
-    pm.expect(response.s3Key).to.exist;
-    pm.expect(response.uploadUrl).to.exist;
-    pm.expect(response.uploadUrlExpiresInSeconds).to.exist;
+	pm.expect(response.clipId).to.exist
+	pm.expect(response.clientClipId).to.exist
+	pm.expect(response.s3Key).to.exist
+	pm.expect(response.uploadUrl).to.exist
+	pm.expect(response.uploadUrlExpiresInSeconds).to.exist
 
-    pm.environment.set("clipId", response.clipId);
-    pm.environment.set("clientClipId", response.clientClipId);
-    pm.environment.set("s3Key", response.s3Key);
-    pm.environment.set("uploadUrl", response.uploadUrl);
-});
+	pm.environment.set("clipId", response.clipId)
+	pm.environment.set("clientClipId", response.clientClipId)
+	pm.environment.set("s3Key", response.s3Key)
+	pm.environment.set("uploadUrl", response.uploadUrl)
+})
 ```
 
 Optional script for `PUT {{uploadUrl}}`:
 
 ```javascript
 pm.test("PUT pre-signed URL upload succeeds", function () {
-    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);
-});
+	pm.expect(pm.response.code).to.be.oneOf([200, 201, 204])
+})
 ```
 
 ## Security Notes

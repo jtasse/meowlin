@@ -87,18 +87,18 @@ Use CommonJS in current Node Lambda files unless the project is intentionally co
 CommonJS pattern:
 
 ```js
-const crypto = require('crypto');
+const crypto = require("crypto")
 
 exports.handler = async (event) => {
-  // handler body
-};
+	// handler body
+}
 ```
 
 Avoid mixing CommonJS and ES module syntax in the same Lambda. Do not use `import` or `export` in `.js` files unless `package.json` has:
 
 ```json
 {
-  "type": "module"
+	"type": "module"
 }
 ```
 
@@ -142,7 +142,7 @@ s3Key
 Use conditional writes when creating items:
 
 ```js
-ConditionExpression: 'attribute_not_exists(clipId)'
+ConditionExpression: "attribute_not_exists(clipId)"
 ```
 
 ## S3 Upload Guidance
@@ -196,17 +196,13 @@ sam local start-api
 sam deploy
 ```
 
-Start local API with default stage behavior:
+Start local API:
 
 ```powershell
 sam local start-api
 ```
 
-Invoke local API as prod when needed:
-
-```powershell
-sam local start-api --parameter-overrides PrimaryStageName=prod
-```
+`sam local start-api` exposes the Lambda at the root: `http://127.0.0.1:3000/uploads`. To test with explicit stage paths locally, use `sam local start-api --stage dev` or `sam local start-api --stage prod`. Postman can use `{{base_url}}/{{stage_name}}/uploads` which works for both local and deployed APIs.
 
 If local API testing behaves unexpectedly, stop and restart `sam local start-api` after rebuilding.
 
@@ -234,20 +230,20 @@ Recommended requests:
 In the `POST /uploads` Tests tab, capture values:
 
 ```js
-const response = pm.response.json();
+const response = pm.response.json()
 
-pm.environment.set("clipId", response.clipId);
-pm.environment.set("clientClipId", response.clientClipId);
-pm.environment.set("s3Key", response.s3Key);
-pm.environment.set("uploadUrl", response.uploadUrl);
+pm.environment.set("clipId", response.clipId)
+pm.environment.set("clientClipId", response.clientClipId)
+pm.environment.set("s3Key", response.s3Key)
+pm.environment.set("uploadUrl", response.uploadUrl)
 
 pm.test("Request Upload succeeded", function () {
-    pm.response.to.have.status(200);
-    pm.expect(response.clipId).to.exist;
-    pm.expect(response.clientClipId).to.exist;
-    pm.expect(response.s3Key).to.exist;
-    pm.expect(response.uploadUrl).to.exist;
-});
+	pm.response.to.have.status(200)
+	pm.expect(response.clipId).to.exist
+	pm.expect(response.clientClipId).to.exist
+	pm.expect(response.s3Key).to.exist
+	pm.expect(response.uploadUrl).to.exist
+})
 ```
 
 The S3 upload request should use:

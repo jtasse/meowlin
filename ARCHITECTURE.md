@@ -257,7 +257,7 @@ Current state:
 
 What stage separation does now:
 
-- Lets local development default to `dev` while keeping `prod` invokable via parameter override.
+- Local `sam local start-api` should mirror stage URLs: `/dev/...` and `/prod/...` (same as deployed API Gateway).
 - Supports cleaner client configuration (`/dev/uploads` vs `/prod/uploads`).
 - Encourages safer release habits before adding full multi-stack environments.
 

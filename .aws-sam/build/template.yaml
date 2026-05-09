@@ -2,13 +2,6 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: Meowlin - Serverless Cat ID Demo
 Parameters:
-  PrimaryStageName:
-    Type: String
-    Default: dev
-    AllowedValues:
-    - dev
-    - prod
-    Description: Primary API stage (also used by sam local start-api).
   RawAudioBucketName:
     Type: String
     Default: jtj-meowlin-raw-audio
@@ -17,15 +10,6 @@ Parameters:
       ordering cycles).
 
       '
-Conditions:
-  IsPrimaryDev:
-    Fn::Equals:
-    - Ref: PrimaryStageName
-    - dev
-  IsPrimaryProd:
-    Fn::Equals:
-    - Ref: PrimaryStageName
-    - prod
 Globals:
   Function:
     Timeout: 30
@@ -37,18 +21,8 @@ Resources:
   MeowlinHttpApi:
     Type: AWS::Serverless::HttpApi
     Properties:
-      StageName:
-        Ref: PrimaryStageName
-  MeowlinHttpApiDevStage:
-    Condition: IsPrimaryProd
-    Type: AWS::ApiGatewayV2::Stage
-    Properties:
-      ApiId:
-        Ref: MeowlinHttpApi
       StageName: dev
-      AutoDeploy: true
   MeowlinHttpApiProdStage:
-    Condition: IsPrimaryDev
     Type: AWS::ApiGatewayV2::Stage
     Properties:
       ApiId:

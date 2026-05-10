@@ -9,4 +9,13 @@ manifest_hash = ""
 packagetype = "Zip"
 functions = ["RequestUploadUrlFunction"]
 
+[function_build_definitions.35b1038c-1dba-42bf-9efc-d955c700112e]
+codeuri = "C:\\dev\\github\\meowlin\\src\\python\\meowlin_process_clip"
+runtime = "python3.12"
+architecture = "arm64"
+handler = "app.lambda_handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["MeowlinProcessClipFunction"]
+
 [layer_build_definitions]

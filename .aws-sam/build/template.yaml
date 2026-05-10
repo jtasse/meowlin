@@ -71,6 +71,40 @@ Resources:
               Ref: MeowlinHttpApi
     Metadata:
       SamResourceId: RequestUploadUrlFunction
+  MeowlinProcessClipFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: meowlin-process-clip
+      Runtime: python3.12
+      Handler: app.lambda_handler
+      CodeUri: MeowlinProcessClipFunction
+      Environment:
+        Variables:
+          CLIPS_TABLE_NAME: MeowlinClips
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: MeowlinClipsTable
+      - Statement:
+        - Effect: Allow
+          Action:
+          - sqs:ReceiveMessage
+          - sqs:DeleteMessage
+          - sqs:ChangeMessageVisibility
+          Resource:
+            Fn::GetAtt:
+            - MeowlinClipProcessingQueue
+            - Arn
+      Events:
+        ProcessClipQueue:
+          Type: SQS
+          Properties:
+            Queue:
+              Fn::GetAtt:
+              - MeowlinClipProcessingQueue
+              - Arn
+    Metadata:
+      SamResourceId: MeowlinProcessClipFunction
   MeowlinClipProcessingQueue:
     Type: AWS::SQS::Queue
     Properties:

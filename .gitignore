@@ -1,4 +1,5 @@
 node_modules/
 .aws-sam/
+.venv/
 postman/environments/*.local.json
 postman/environments/meowlin-prod.postman_environment.json

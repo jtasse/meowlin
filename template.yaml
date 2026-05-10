@@ -14,23 +14,58 @@ Globals:
   Function:
     Timeout: 30
     MemorySize: 128
-    Runtime: nodejs22.x
+    Runtime: nodejs20.x
     Architectures:
       - arm64
 
 Resources:
-  # SAM-managed dev stage with an explicit prod stage allows local /dev and /prod paths.
-  MeowlinHttpApi:
-    Type: AWS::Serverless::HttpApi
+  # SAM manages the dev stage and its deployment entirely.
+  # We add prod as a second stage pointing at the same deployment SAM creates,
+  # referenced via the ServerlessDeploymentApplication convention below.
+  MeowlinApi:
+    Type: AWS::Serverless::Api
     Properties:
       StageName: dev
+      OpenApiVersion: "3.0.1"
 
-  MeowlinHttpApiProdStage:
-    Type: AWS::ApiGatewayV2::Stage
+  # SAM names its auto-created deployment resource as <LogicalId>Deployment<hash>.
+  # Since we can't predict the hash, we create our own explicit deployment for prod
+  # to reference. It must DependsOn all methods (i.e. the Lambda functions whose
+  # events create the API methods) so it captures the full integration.
+  MeowlinApiProdDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - RequestUploadUrlFunctionUploadsPermissionProd
+      - GetClipResultFunctionGetClipResultPermissionProd
     Properties:
-      ApiId: !Ref MeowlinHttpApi
+      RestApiId: !Ref MeowlinApi
+      Description: !Sub "Prod deployment ${AWS::StackName}"
+
+  # Grant API Gateway permission to invoke the Lambda functions from the prod stage.
+  # SAM only generates invoke permissions for its own managed stage (dev).
+  # Without these, prod calls return 403.
+  RequestUploadUrlFunctionUploadsPermissionProd:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt RequestUploadUrlFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${MeowlinApi}/prod/POST/uploads"
+
+  GetClipResultFunctionGetClipResultPermissionProd:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt GetClipResultFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${MeowlinApi}/prod/GET/clips/*"
+
+  MeowlinApiProdStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref MeowlinApi
       StageName: prod
-      AutoDeploy: true
+      DeploymentId: !Ref MeowlinApiProdDeployment
 
   RequestUploadUrlFunction:
     Type: AWS::Serverless::Function
@@ -41,7 +76,6 @@ Resources:
       Environment:
         Variables:
           NODE_OPTIONS: "--v8-pool-size=1"
-          # Use explicit table name so local SAM resolution doesn't pass logical ID.
           CLIPS_TABLE_NAME: MeowlinClips
           RAW_AUDIO_BUCKET_NAME: !Ref RawAudioBucket
       Policies:
@@ -49,11 +83,10 @@ Resources:
             TableName: !Ref MeowlinClipsTable
         - S3WritePolicy:
             BucketName: !Ref RawAudioBucket
-        - Statement: # Policy for S3 presigning
+        - Statement:
             - Effect: Allow
               Action:
                 - s3:PutObject
-                - s3:PutObjectAcl # Required if you need to set ACLs, otherwise can be removed
               Resource: !Join
                 - ""
                 - - "arn:"
@@ -63,17 +96,39 @@ Resources:
                   - "/*"
       Events:
         Uploads:
-          Type: HttpApi
+          Type: Api
           Properties:
             Path: /uploads
             Method: POST
-            ApiId: !Ref MeowlinHttpApi
+            RestApiId: !Ref MeowlinApi
+
+  GetClipResultFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: meowlin-get-clip-result
+      Handler: src/node/get-clip-result/index.handler
+      CodeUri: .
+      Environment:
+        Variables:
+          CLIPS_TABLE_NAME: MeowlinClips
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref MeowlinClipsTable
+      Events:
+        GetClipResult:
+          Type: Api
+          Properties:
+            Path: /clips/{clipId}
+            Method: GET
+            RestApiId: !Ref MeowlinApi
 
   MeowlinProcessClipFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: meowlin-process-clip
       Runtime: python3.12
+      # Inherits arm64 from Globals — ensure Python dependencies are built for arm64,
+      # or override with Architectures: [x86_64] if using pre-built x86 packages.
       Handler: app.lambda_handler
       CodeUri: src/python/meowlin_process_clip
       Environment:
@@ -82,13 +137,6 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref MeowlinClipsTable
-        - Statement:
-            - Effect: Allow
-              Action:
-                - sqs:ReceiveMessage
-                - sqs:DeleteMessage
-                - sqs:ChangeMessageVisibility
-              Resource: !GetAtt MeowlinClipProcessingQueue.Arn
       Events:
         ProcessClipQueue:
           Type: SQS
@@ -153,15 +201,15 @@ Resources:
                     Value: .mp3
 
 Outputs:
-  MeowlinHttpApiUrl:
-    Description: "API Gateway HTTP API endpoint URL"
-    Value: !GetAtt MeowlinHttpApi.ApiEndpoint
-  MeowlinHttpApiDevUploadsUrl:
+  MeowlinApiUrl:
+    Description: "API Gateway REST API base URL"
+    Value: !Sub "https://${MeowlinApi}.execute-api.${AWS::Region}.amazonaws.com"
+  MeowlinApiDevUploadsUrl:
     Description: "dev stage URL for uploads endpoint"
-    Value: !Sub "${MeowlinHttpApi.ApiEndpoint}/dev/uploads"
-  MeowlinHttpApiProdUploadsUrl:
+    Value: !Sub "https://${MeowlinApi}.execute-api.${AWS::Region}.amazonaws.com/dev/uploads"
+  MeowlinApiProdUploadsUrl:
     Description: "prod stage URL for uploads endpoint"
-    Value: !Sub "${MeowlinHttpApi.ApiEndpoint}/prod/uploads"
+    Value: !Sub "https://${MeowlinApi}.execute-api.${AWS::Region}.amazonaws.com/prod/uploads"
   RequestUploadUrlFunctionArn:
     Description: "ARN of the RequestUploadUrl Lambda Function"
     Value: !GetAtt RequestUploadUrlFunction.Arn
@@ -171,11 +219,9 @@ Outputs:
   RawAudioBucketName:
     Description: "S3 Bucket Name for Raw Audio Uploads"
     Value: !Ref RawAudioBucket
-
   ClipProcessingQueueUrl:
     Description: "SQS queue URL for S3 upload processing events"
     Value: !Ref MeowlinClipProcessingQueue
-
   ClipProcessingQueueArn:
     Description: "SQS queue ARN for S3 upload processing events"
     Value: !GetAtt MeowlinClipProcessingQueue.Arn

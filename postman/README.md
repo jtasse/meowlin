@@ -15,8 +15,11 @@ Set these values in each environment:
 - `base_url`: API base URL without trailing slash.
   - Example: `https://4el1nculma.execute-api.us-east-1.amazonaws.com`
 - `stage_name`: API stage.
+
   - `dev` for development
   - `prod` for production
+
+  > NOTE: if debugging locally, see `SAM local debugging` below. Otherwise, test using the deployed dev or prod stages (note that both will share the same base URL)
 
 Runtime variables populated by scripts:
 
@@ -24,22 +27,6 @@ Runtime variables populated by scripts:
 - `clientClipId`
 - `s3Key`
 - `uploadUrl`
-
-## SAM local
-
-When running `sam local start-api`, use the root path with stage variables:
-
-- Set `base_url` to `http://127.0.0.1:3000`
-- Use `{{base_url}}/{{stage_name}}/uploads` in requests
-
-Alternatively, use the root endpoint directly:
-
-- `http://127.0.0.1:3000/uploads`
-
-If you need explicit `/dev/` and `/prod/` stage prefixes locally, use:
-
-- `sam local start-api --stage dev`
-- `sam local start-api --stage prod`
 
 ## Request Flow
 
@@ -56,10 +43,16 @@ If you need explicit `/dev/` and `/prod/` stage prefixes locally, use:
      ```
 
 2. **Upload Audio**
+
    - Method: `PUT`
    - URL: `{{uploadUrl}}`
    - Header: `Content-Type: audio/mpeg`
    - Body: binary `.mp3` file from your local machine
+
+3. **Get Clip Result**
+   - Method: `GET`
+   - URL: `{{base_url}}/{{stage_name}}/clips/{{clipId}}`
+   - Description: retrieve the clip processing result and status for the previously uploaded clip
 
 Important: the `PUT` request intentionally bypasses API Gateway and uploads directly to S3 using the pre-signed URL.
 
@@ -99,3 +92,10 @@ pm.test("PUT pre-signed URL upload succeeds", function () {
 - Do not commit live pre-signed URLs.
 - Do not store secrets in exported environment files.
 - Prefer committing sanitized environment templates for public sharing.
+
+## SAM local debugging
+
+When running `sam local start-api` (for local deugging), use the root path WITHOUT stage variables:
+
+- Set `base_url` to `http://127.0.0.1:3000`
+- Use `{{base_url}}/uploads` in requests

@@ -14,21 +14,55 @@ Globals:
   Function:
     Timeout: 30
     MemorySize: 128
-    Runtime: nodejs22.x
+    Runtime: nodejs20.x
     Architectures:
     - arm64
 Resources:
-  MeowlinHttpApi:
-    Type: AWS::Serverless::HttpApi
+  MeowlinApi:
+    Type: AWS::Serverless::Api
     Properties:
       StageName: dev
-  MeowlinHttpApiProdStage:
-    Type: AWS::ApiGatewayV2::Stage
+      OpenApiVersion: 3.0.1
+  MeowlinApiProdDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+    - RequestUploadUrlFunctionUploadsPermissionProd
+    - GetClipResultFunctionGetClipResultPermissionProd
     Properties:
-      ApiId:
-        Ref: MeowlinHttpApi
+      RestApiId:
+        Ref: MeowlinApi
+      Description:
+        Fn::Sub: Prod deployment ${AWS::StackName}
+  RequestUploadUrlFunctionUploadsPermissionProd:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+        - RequestUploadUrlFunction
+        - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Sub: arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${MeowlinApi}/prod/POST/uploads
+  GetClipResultFunctionGetClipResultPermissionProd:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+        - GetClipResultFunction
+        - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Sub: arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${MeowlinApi}/prod/GET/clips/*
+  MeowlinApiProdStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId:
+        Ref: MeowlinApi
       StageName: prod
-      AutoDeploy: true
+      DeploymentId:
+        Ref: MeowlinApiProdDeployment
   RequestUploadUrlFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -52,7 +86,6 @@ Resources:
         - Effect: Allow
           Action:
           - s3:PutObject
-          - s3:PutObjectAcl
           Resource:
             Fn::Join:
             - ''
@@ -63,14 +96,37 @@ Resources:
               - /*
       Events:
         Uploads:
-          Type: HttpApi
+          Type: Api
           Properties:
             Path: /uploads
             Method: POST
-            ApiId:
-              Ref: MeowlinHttpApi
+            RestApiId:
+              Ref: MeowlinApi
     Metadata:
       SamResourceId: RequestUploadUrlFunction
+  GetClipResultFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: meowlin-get-clip-result
+      Handler: src/node/get-clip-result/index.handler
+      CodeUri: GetClipResultFunction
+      Environment:
+        Variables:
+          CLIPS_TABLE_NAME: MeowlinClips
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: MeowlinClipsTable
+      Events:
+        GetClipResult:
+          Type: Api
+          Properties:
+            Path: /clips/{clipId}
+            Method: GET
+            RestApiId:
+              Ref: MeowlinApi
+    Metadata:
+      SamResourceId: GetClipResultFunction
   MeowlinProcessClipFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -85,16 +141,6 @@ Resources:
       - DynamoDBCrudPolicy:
           TableName:
             Ref: MeowlinClipsTable
-      - Statement:
-        - Effect: Allow
-          Action:
-          - sqs:ReceiveMessage
-          - sqs:DeleteMessage
-          - sqs:ChangeMessageVisibility
-          Resource:
-            Fn::GetAtt:
-            - MeowlinClipProcessingQueue
-            - Arn
       Events:
         ProcessClipQueue:
           Type: SQS
@@ -168,20 +214,18 @@ Resources:
               - Name: suffix
                 Value: .mp3
 Outputs:
-  MeowlinHttpApiUrl:
-    Description: API Gateway HTTP API endpoint URL
+  MeowlinApiUrl:
+    Description: API Gateway REST API base URL
     Value:
-      Fn::GetAtt:
-      - MeowlinHttpApi
-      - ApiEndpoint
-  MeowlinHttpApiDevUploadsUrl:
+      Fn::Sub: https://${MeowlinApi}.execute-api.${AWS::Region}.amazonaws.com
+  MeowlinApiDevUploadsUrl:
     Description: dev stage URL for uploads endpoint
     Value:
-      Fn::Sub: ${MeowlinHttpApi.ApiEndpoint}/dev/uploads
-  MeowlinHttpApiProdUploadsUrl:
+      Fn::Sub: https://${MeowlinApi}.execute-api.${AWS::Region}.amazonaws.com/dev/uploads
+  MeowlinApiProdUploadsUrl:
     Description: prod stage URL for uploads endpoint
     Value:
-      Fn::Sub: ${MeowlinHttpApi.ApiEndpoint}/prod/uploads
+      Fn::Sub: https://${MeowlinApi}.execute-api.${AWS::Region}.amazonaws.com/prod/uploads
   RequestUploadUrlFunctionArn:
     Description: ARN of the RequestUploadUrl Lambda Function
     Value:

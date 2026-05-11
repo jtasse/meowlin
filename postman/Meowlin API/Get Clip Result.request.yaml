@@ -1,5 +1,5 @@
 $kind: http-request
 description: Fetch the clip processing result from DynamoDB using clipId.
-url: "{{apiBaseUrl}}/{{apiStage}}/clips/{{clipId}}"
+url: "{{base_url}}/{{stage_name}}/clips/{{clipId}}"
 method: GET
-order: 2000
+order: 3000

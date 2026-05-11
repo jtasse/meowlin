@@ -1,0 +1,18 @@
+workspace:
+  id: 6a4ce3a1-074e-4069-aea1-1c09a9864dcd
+
+localResources:
+  collections:
+    - ../postman/collections/Meowlin API
+  environments:
+    - ../postman/environments/meowlin-dev.environment.yaml
+    - ../postman/environments/meowlin-prod.environment.yaml
+
+# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
+
+cloudResources:
+  collections:
+    ../postman/collections/Meowlin API: 34097457-22f1ddb8-6ea4-4076-b4e5-2f395f34ebff
+  environments:
+    ../postman/environments/meowlin-dev.environment.yaml: 34097457-1b02dabd-be13-418b-b110-3aaad65ecd1f
+    ../postman/environments/meowlin-prod.environment.yaml: 34097457-910257ca-dbcd-416e-97b0-5a688845b8a3

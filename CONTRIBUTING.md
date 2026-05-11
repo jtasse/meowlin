@@ -221,7 +221,11 @@ Do not add `ReservedConcurrentExecutions` unless Lambda account concurrency quot
 
 Postman is the temporary client.
 
-Recommended requests:
+### Rules for editing Postman files
+
+Only edit files that were originally created by Postman's Git Sync. Do not create new collection files from scratch or convert exported JSON into this format manually.
+
+### Recommended requests
 
 1. `POST /uploads`
 2. `PUT {{uploadUrl}}` with binary MP3 file

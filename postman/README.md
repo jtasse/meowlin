@@ -1,19 +1,20 @@
 # Postman Setup
 
-This folder contains the Postman collection and environments for testing the Meowlin API upload flow.
+This folder contains the Postman collection and environments for testing the Meowlin API upload flow. Only the files listed below should be modified by coding assistants.
+
+> NOTE: I may make other changes via the Postman Desktop UI
 
 ## Files
 
-- `Meowlin.postman_collection.json`: API requests for the current MVP workflow.
-- `environments/meowlin-dev.postman_environment.json`: environment values for `dev`.
-- `environments/meowlin-prod.postman_environment.json`: environment values for `prod`.
+- Requests (under `postman/Meowlin API`)
+- Environments (under `postman/environments`)
 
 ## Environment Variables
 
 Set these values in each environment:
 
 - `base_url`: API base URL without trailing slash.
-  - Example: `https://4el1nculma.execute-api.us-east-1.amazonaws.com`
+  - Example: `https://4fl1zulmr.execute-api.us-east-1.amazonaws.com`
 - `stage_name`: API stage.
 
   - `dev` for development
@@ -89,13 +90,5 @@ pm.test("PUT pre-signed URL upload succeeds", function () {
 
 ## Security Notes
 
-- Do not commit live pre-signed URLs.
 - Do not store secrets in exported environment files.
-- Prefer committing sanitized environment templates for public sharing.
-
-## SAM local debugging
-
-When running `sam local start-api` (for local deugging), use the root path WITHOUT stage variables:
-
-- Set `base_url` to `http://127.0.0.1:3000`
-- Use `{{base_url}}/uploads` in requests
+- Exclude non-test environment files via .gitignore

@@ -1,0 +1,17 @@
+name: meowlin-dev
+values:
+  - key: base_url
+    value: 'http://127.0.0.1:3000'
+  - key: stage_name
+    value: prod
+  - key: uploadUrl
+    value: ''
+  - key: clipdId
+    value: ''
+  - key: clientClipId
+    value: ''
+  - key: s3Key
+    value: ''
+  - key: clipId
+    value: ''
+color: 0

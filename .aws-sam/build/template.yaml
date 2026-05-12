@@ -108,7 +108,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: meowlin-get-clip-result
-      Handler: src/node/get-clip-result/index.handler
+      Handler: src/node/get-clip-result/getClipResult.handler
       CodeUri: GetClipResultFunction
       Environment:
         Variables:

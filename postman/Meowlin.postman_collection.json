@@ -1,0 +1,150 @@
+{
+  "info": {
+    "name": "Meowlin API",
+    "description": "Collection for Meowlin local and deployed HTTP API endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "apiBaseUrl",
+      "value": "http://127.0.0.1:3000",
+      "type": "string",
+      "description": "Local SAM API hostname and port. Change for deployed API as needed."
+    },
+    {
+      "key": "apiStage",
+      "value": "prod",
+      "type": "string",
+      "description": "API stage path. Set to dev or prod depending on the target environment."
+    },
+    {
+      "key": "clipId",
+      "value": "",
+      "type": "string",
+      "description": "Clip ID returned by the upload endpoint. Fill in before calling the GET clip result request."
+    }
+  ],
+  "item": [
+    {
+      "name": "Request Upload URL",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Response contains clipId and uploadUrl\", function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('clipId');",
+              "    pm.expect(jsonData).to.have.property('uploadUrl');",
+              "    ",
+              "    // Extract and set variables for chaining",
+              "    pm.environment.set('clipId', jsonData.clipId);",
+              "    pm.environment.set('uploadUrl', jsonData.uploadUrl);",
+              "    console.log('✓ clipId set to:', jsonData.clipId);",
+              "    console.log('✓ uploadUrl set');",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/{{stage_name}}/uploads",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "{{stage_name}}",
+            "uploads"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"clientClipId\": \"test-clip-123\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "description": "Request a signed upload URL for raw audio upload to S3. Copy the returned clipId and uploadUrl."
+      },
+      "response": []
+    },
+    {
+      "name": "Upload Raw Audio",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"PUT pre-signed URL upload succeeds\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disabledSystemHeaders": {
+          "content-type": true
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "audio/mpeg",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "file",
+          "file": {
+            "src": "/C:/dev/github/meowlin/audio_samples/jojo_001.mp3"
+          }
+        },
+        "url": {
+          "raw": "{{uploadUrl}}"
+        },
+        "description": "This is a PUT request and it is used to overwrite an existing piece of data. For instance, after you create an entity with a POST request, you may want to modify that later. You can do that using a PUT request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful PUT request typically returns a `200 OK`, `201 Created`, or `204 No Content` response code."
+      },
+      "response": []
+    },
+    {
+      "name": "Get Clip Result",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/{{stage_name}}/clips/{{clipId}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "{{stage_name}}",
+            "clips",
+            "{{clipId}}"
+          ]
+        },
+        "description": "Fetch the clip processing result from DynamoDB using clipId."
+      },
+      "response": []
+    }
+  ]
+}

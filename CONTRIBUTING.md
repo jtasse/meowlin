@@ -27,7 +27,7 @@ In scope:
 - DynamoDB
 - S3 presigned uploads
 - Postman as a stand-in client
-- Later: SQS and a processing Lambda
+- SQS and a processing Lambda
 - Mocked classification results
 
 Out of scope for now:
@@ -74,7 +74,7 @@ Observed preferences:
 
 ## Language Guidance
 
-Use Node.js for API-style Lambda functions, especially:
+- Use Node.js for API-style Lambda functions.
 
 ```text
 RequestUploadUrlFunction

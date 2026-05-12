@@ -2,7 +2,7 @@
 
 This folder contains the Postman collection and environments for testing the Meowlin API upload flow. Only the files listed below should be modified by coding assistants.
 
-> NOTE: I may make other changes via the Postman Desktop UI
+> **NOTE**: it is possible to make other changes via the Postman Desktop UI
 
 ## Files
 
@@ -19,8 +19,6 @@ Set these values in each environment:
 
   - `dev` for development
   - `prod` for production
-
-  > NOTE: if debugging locally, see `SAM local debugging` below. Otherwise, test using the deployed dev or prod stages (note that both will share the same base URL)
 
 Runtime variables populated by scripts:
 
@@ -39,9 +37,11 @@ Runtime variables populated by scripts:
    - Body example:
      ```json
      {
-     	"clientClipId": "0000000001"
+     	"clientClipId": "{{$timestamp}}"
      }
      ```
+
+   > **NOTE**: the `{{$timestamp}}` dynamic Postman variable is useful because it auto-increments the value for us
 
 2. **Upload Audio**
 
@@ -91,4 +91,4 @@ pm.test("PUT pre-signed URL upload succeeds", function () {
 ## Security Notes
 
 - Do not store secrets in exported environment files.
-- Exclude non-test environment files via .gitignore
+- Exclude non-test environment files via `.gitignore`

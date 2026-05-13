@@ -1,16 +1,33 @@
 # Meowlin
 
-Meowlin is a serverless AWS demo application inspired by bird identification apps. It provides a cloud-native pipeline for ingesting audio clips (meows) and processing them asynchronously.
+Meowlin is a serverless AWS demo application inspired by the [Merlin](https://merlin.allaboutbirds.org/) bird identification app. Meowlin provides a cloud-native pipeline that ingests audio clips and \*_simulates_ processing them asynchronously to determine if any meows and corresponding cat breeds can be identified.
 
-This project is designed as a portfolio piece to demonstrate AWS serverless fundamentals including API Gateway, Lambda, S3, DynamoDB, and SQS.
+> **\*NOTE**: although Meowlin currently mocks the processing of audio clips, this simulated component _could_ be replaced with true machine learning + processing solution in the future.
+
+## Purpose
+
+I have created this project for my portfolio in order to demonstrate AWS serverless fundamentals listed in the [Core Stack](#core-stack) below.
 
 ## Core Stack
 
-- **Infrastructure**: AWS SAM (Serverless Application Model)
-- **API**: API Gateway (REST API)
-- **Compute**: AWS Lambda (Node.js 20.x for API, Python 3.12 for Processing)
-- **Storage**: S3 (Raw Audio), DynamoDB (Metadata & Results)
-- **Messaging**: SQS (Asynchronous Processing)
+| AWS Component                          | Description                                                             |
+| :------------------------------------- | :---------------------------------------------------------------------- |
+| **Serverless Application Model (SAM)** | Infrastructure management                                               |
+| **API Gateway**                        | REST API                                                                |
+| **Lambda**                             | Serverless functions (Node.js 20.x for API, Python 3.12 for Processing) |
+| **S3**                                 | Raw audio storage                                                       |
+| **DynamoDB**                           | Persistentence of metadata and results                                  |
+| **SQS**                                | Messaging to support asynchronous processing                            |
+
+## Prerequisites
+
+Before running the commands below, ensure you have the following installed:
+
+- **[AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)**: Used for building and local emulation. [Install Guide]
+- **[Docker Desktop](https://docs.docker.com/desktop/)**: Required by SAM to run Lambda functions in a local container environment
+- **[Node.js 20.x](https://nodejs.org/en/download)**: Required to build the API Lambda functions
+- **[Python 3.12](https://www.python.org/downloads/release/python-3120/)**: Required to build the processing/classifier Lambda functions
+- **[AWS CLI](https://aws.amazon.com/cli/)**: Configured with credentials if you intend to deploy or interact with live AWS resources
 
 ## Quick Start
 
@@ -35,8 +52,8 @@ This project is designed as a portfolio piece to demonstrate AWS serverless fund
 
 ## See Also
 
-| Document                            | Description                                                                |
-| :---------------------------------- | :------------------------------------------------------------------------- |
-| [ARCHITECTURE.md](ARCHITECTURE.md)  | Technical overview of the system design, sequence diagrams, and data flow. |
-| [CONTRIBUTING.md](CONTRIBUTING.md)  | Guidelines for developers, coding standards, and project scope.            |
-| [Postman README](postman/README.md) | Setup and usage instructions for the Postman collection and environments.  |
+| Document                            | Description                                                               |
+| :---------------------------------- | :------------------------------------------------------------------------ |
+| [ARCHITECTURE.md](ARCHITECTURE.md)  | Technical overview of the system design, sequence diagrams, and data flow |
+| [CONTRIBUTING.md](CONTRIBUTING.md)  | Guidelines for developers, coding standards, and project scope            |
+| [Postman README](postman/README.md) | Setup and usage instructions for the Postman collection and environments  |

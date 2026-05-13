@@ -50,6 +50,24 @@ Before running the commands below, ensure you have the following installed:
   - a significant collection of high quality meow data
 - Authentication is intentionally omitted from the MVP to keep the demo focused on serverless ingestion and processing. A production version would use Cognito/JWT authorization to associate clips with users and protect history endpoints.
 
+## High-Level Data Flow
+
+The following diagram illustrates how data moves through the system from the initial request to the final processed result:
+
+```mermaid
+graph LR
+    A[Client] -->|1. Request Upload| B(API Gateway)
+    B --> C[Lambda: API]
+    C -->|2. Create Metadata| D[(DynamoDB)]
+    C -->|3. Return Presigned URL| A
+    A -->|4. Upload MP3| E{S3 Bucket}
+    E -->|5. Trigger Event| F[SQS Queue]
+    F --> G[Lambda: Processor]
+    G -->|6. Update Result| D
+```
+
+> **NOTE**: to view a sequence digram showin the process in more detail, see [ARCHITECTURE.md](./ARCHITECTURE.md#current-sequence-diagram).
+
 ## See Also
 
 | Document                            | Description                                                               |

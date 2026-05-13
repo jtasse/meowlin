@@ -286,13 +286,3 @@ Store pending upload clip records
 Add presigned S3 upload URL
 Add Postman upload workflow
 ```
-
-## Portfolio Framing
-
-Do not describe the MVP as a real cat identification system.
-
-Better framing:
-
-```text
-Meowlin is a serverless AWS audio-ingestion and mock-classification pipeline inspired by Merlin Sound ID. The classifier is mocked, but the architecture is designed so a real model could replace the mock boundary later.
-```

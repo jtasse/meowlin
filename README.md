@@ -31,16 +31,20 @@ Before running the commands below, ensure you have the following installed:
 
 ## Quick Start
 
-1. **Build the project**:
+1. **Clone the repo**:
+   ```powershell
+   git clone https://github.com/jtasse/meowlin.git
+   ```
+2. **Build the project**:
    ```powershell
    sam build
    ```
-2. **Run locally**:
+3. **Run locally**:
    ```powershell
    sam local start-api
    ```
-3. **Test with Postman**:
-   Import the collection and environment from the `postman/` directory.
+4. **Test with Postman**:
+   - Import the collection and environment from the `postman/` directory.
 
 # Caveats
 
@@ -66,7 +70,7 @@ graph LR
     G -->|6. Update Result| D
 ```
 
-> **NOTE**: to view a sequence digram showin the process in more detail, see [ARCHITECTURE.md](./ARCHITECTURE.md#current-sequence-diagram).
+> **NOTE**: to view a sequence digram showing the process in more detail, see [ARCHITECTURE.md](./ARCHITECTURE.md#current-sequence-diagram).
 
 ## See Also
 

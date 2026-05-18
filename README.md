@@ -46,6 +46,20 @@ Before running the commands below, ensure you have the following installed:
 4. **Test with Postman**:
    - Import the collection and environment from the `postman/` directory.
 
+## Frontend
+
+The Next.js frontend lives in `src/react`.
+
+To run it locally:
+
+```powershell
+cd src/react
+npm install
+npm run dev
+```
+
+Then open `http://localhost:3000`.
+
 # Caveats
 
 - Although the Merlin bird ID app performs audio processing in the client on the mobile device; for this demo I have shifted this work into AWS.

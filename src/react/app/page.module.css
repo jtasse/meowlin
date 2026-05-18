@@ -1,0 +1,33 @@
+.uploadButton {
+	display: flex;
+	height: 48px;
+	width: 100%;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+
+	border-radius: 9999px;
+
+	background-color: var(--foreground);
+	color: var(--background);
+
+	transition: background-color 0.2s ease;
+
+	padding: 0 20px;
+}
+
+.uploadButton:hover {
+	background-color: #383838;
+}
+
+@media (prefers-color-scheme: dark) {
+	.uploadButton:hover {
+		background-color: #ccc;
+	}
+}
+
+@media (min-width: 768px) {
+	.uploadButton {
+		width: 200px;
+	}
+}

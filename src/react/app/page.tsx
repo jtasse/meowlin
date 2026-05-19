@@ -1,40 +1,30 @@
 "use client"
+
+import { AuthFrame } from "./AuthFrame"
+import { UploadControl } from "./UploadControl"
 import styles from "./page.module.css"
-
-function UploadButton() {
-	function handleClick() {
-		alert("You started an upload!")
-	}
-
-	return (
-		<button onClick={handleClick} className={styles.uploadButton}>
-			Upload audio file
-		</button>
-	)
-}
 
 export default function Home() {
 	return (
-		<div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-			<main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-				<div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-					<h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-						Welcome to Meowlin!
-					</h1>
-					<h2>Click the button below to upload an audio file.</h2>
-					<div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-						<UploadButton />
-						<a
-							className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-							href="https://github.com/jtasse/meowlin/blob/main/README.md"
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							Documentation
-						</a>
-					</div>
+		<AuthFrame
+			eyebrow="Audio Intake"
+			title="Upload a clip and let Meowlin *inspect the meows."
+			description="*NOTE: Meowlin does does not actually process audio files at this time. Instead, the solution returns mocked results."
+		>
+			<div className="flex flex-col gap-6">
+				<a
+					className="inline-flex h-12 w-fit items-center justify-center rounded-md border border-zinc-200 px-5 font-medium text-zinc-700 transition-colors hover:border-zinc-900 hover:text-zinc-950"
+					href="https://github.com/jtasse/meowlin/blob/main/README.md"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					Read the Docs
+				</a>
+
+				<div className={styles.uploadControlOffset}>
+					<UploadControl />
 				</div>
-			</main>
-		</div>
+			</div>
+		</AuthFrame>
 	)
 }

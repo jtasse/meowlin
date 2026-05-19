@@ -1,38 +1,44 @@
 # Meowlin Frontend
 
-This directory contains the Next.js frontend for Meowlin.
+This folder contains the Meowlin React frontend built with Next.js.
 
-## App Root
+## Location
 
-The frontend app root is `src/react`.
+Frontend root: `src/react`
 
-## Getting Started
+## Run The Dev Server
 
-From `src/react`, install dependencies and start the development server:
+From the React folder:
 
 ```bash
+cd src/react
 npm install
 npm run dev
 ```
 
-Then open [http://localhost:3000](http://localhost:3000).
+Then open `http://localhost:3000`.
 
-## Project Structure
+You can also start it from the repository root:
 
-- `app/`: App Router pages, layout, and global styles
-- `public/`: Static assets
-- `package.json`: Frontend scripts and dependencies
-- `next.config.ts`: Next.js configuration
+```bash
+npm --prefix src/react install
+npm --prefix src/react run dev
+```
 
 ## Useful Commands
+
+Run these from `src/react`:
 
 ```bash
 npm run dev
 npm run build
+npm run start
 npm run lint
 ```
 
-## Notes
+## Structure
 
-- The frontend was flattened from `src/react/meowlin-frontend` into `src/react`.
-- Postman assets can still be kept for backend/API testing while the UI is being built out.
+- `app/` - App Router pages, layouts, and styles
+- `public/` - Static assets
+- `package.json` - Frontend scripts and dependencies
+- `next.config.ts` - Next.js configuration

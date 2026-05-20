@@ -14,7 +14,7 @@ I have created this project for my portfolio in order to demonstrate AWS serverl
 | :------------------------------------- | :---------------------------------------------------------------------- |
 | **Serverless Application Model (SAM)** | Infrastructure management                                               |
 | **API Gateway**                        | REST API                                                                |
-| **Lambda**                             | Serverless functions (Node.js 20.x for API, Python 3.12 for Processing) |
+| **Lambda**                             | Serverless functions (Node.js 22.x for API, Python 3.12 for Processing) |
 | **S3**                                 | Raw audio storage                                                       |
 | **DynamoDB**                           | Persistentence of metadata and results                                  |
 | **SQS**                                | Messaging to support asynchronous processing                            |
@@ -25,7 +25,7 @@ Before running the commands below, ensure you have the following installed:
 
 - **[AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)**: Used for building and local emulation. [Install Guide]
 - **[Docker Desktop](https://docs.docker.com/desktop/)**: Required by SAM to run Lambda functions in a local container environment
-- **[Node.js 20.x](https://nodejs.org/en/download)**: Required to build the API Lambda functions
+- **[Node.js 22.x](https://nodejs.org/en/download)**: Required to build the API Lambda functions
 - **[Python 3.12](https://www.python.org/downloads/release/python-3120/)**: Required to build the processing/classifier Lambda functions
 - **[AWS CLI](https://aws.amazon.com/cli/)**: Configured with credentials if you intend to deploy or interact with live AWS resources
 

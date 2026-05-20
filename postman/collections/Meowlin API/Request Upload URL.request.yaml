@@ -1,4 +1,5 @@
 $kind: http-request
+name: Request Upload URL
 description: Request a signed upload URL for raw audio upload to S3. Copy the returned clipId and uploadUrl.
 url: "{{base_url}}/{{stage_name}}/uploads"
 method: POST
@@ -8,7 +9,8 @@ body:
   type: json
   content: |-
     {
-      "clientClipId": "{{$timestamp}}"
+      "clientClipId": "{{$timestamp}}",
+      "contentType": "audio/mpeg"
     }
 scripts:
   - type: afterResponse

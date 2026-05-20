@@ -9,6 +9,10 @@ const dynamoClient = new DynamoDBClient({
 	maxAttempts: 1,
 })
 const docClient = DynamoDBDocumentClient.from(dynamoClient)
+const CORS_HEADERS = {
+	"Content-Type": "application/json",
+	"Access-Control-Allow-Origin": "http://localhost:3000",
+}
 
 exports.handler = async (event) => {
 	console.log(
@@ -25,7 +29,7 @@ exports.handler = async (event) => {
 		console.error("Missing CLIPS_TABLE_NAME environment variable")
 		return {
 			statusCode: 500,
-			headers: { "Content-Type": "application/json" },
+			headers: CORS_HEADERS,
 			body: JSON.stringify({ message: "Server configuration error." }),
 		}
 	}
@@ -35,7 +39,7 @@ exports.handler = async (event) => {
 	if (!clipId) {
 		return {
 			statusCode: 400,
-			headers: { "Content-Type": "application/json" },
+			headers: CORS_HEADERS,
 			body: JSON.stringify({ message: "Missing clipId path parameter." }),
 		}
 	}
@@ -51,21 +55,21 @@ exports.handler = async (event) => {
 		if (!response.Item) {
 			return {
 				statusCode: 404,
-				headers: { "Content-Type": "application/json" },
+				headers: CORS_HEADERS,
 				body: JSON.stringify({ message: "Clip not found." }),
 			}
 		}
 
 		return {
 			statusCode: 200,
-			headers: { "Content-Type": "application/json" },
+			headers: CORS_HEADERS,
 			body: JSON.stringify(response.Item),
 		}
 	} catch (error) {
 		console.error("Error fetching clip result", error)
 		return {
 			statusCode: 500,
-			headers: { "Content-Type": "application/json" },
+			headers: CORS_HEADERS,
 			body: JSON.stringify({ message: "Failed to retrieve clip result." }),
 		}
 	}

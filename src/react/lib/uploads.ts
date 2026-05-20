@@ -18,6 +18,10 @@ export type UploadRawAudioRequest = {
     file: File
 }
 
+export type GetClipResultRequest = {
+    clipId: string
+}
+
 export type RequestUploadUrlResponse = {
     clipId: string
     clientClipId: string
@@ -30,6 +34,17 @@ export type RequestUploadUrlResponse = {
 export type UploadRawAudioResponse = {
     success: boolean
     message?: string
+}
+
+export type GetClipResultResponse = {
+    clientClipId: string
+    clipId: string
+    clipStatus: string
+    confidenceScore: number | null,
+    createdAt: Date,
+    identifiedBreed: string | null,
+    processedAt: Date | null,
+    s3Key: string
 }
 
 export async function requestUploadUrl(
@@ -69,4 +84,22 @@ export async function uploadRawAudio(
         const errorBody = await response.text().catch(() => "")
         throw new Error(errorBody || "Failed to upload raw audio.")
     }
+}
+
+export async function getClipResult(
+    payload: GetClipResultRequest,
+): Promise<GetClipResultResponse> {
+    const response = await fetch(
+        `${config.apiBaseUrl}/clips/${payload.clipId}`,
+        {
+            method: "GET",
+        },
+    )
+
+    if (!response.ok) {
+        const errorBody = await response.json().catch(() => null)
+        throw new Error(errorBody?.message ?? "Failed to get clip result.")
+    }
+
+    return response.json()
 }

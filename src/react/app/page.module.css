@@ -244,3 +244,7 @@
 .successText {
 	color: #16a34a;
 }
+
+.errorText {
+	color: #dc2626;
+}

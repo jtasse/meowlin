@@ -59,7 +59,8 @@ Runtime variables populated by scripts:
    - Body example:
      ```json
      {
-     	"clientClipId": "{{$timestamp}}"
+     	"clientClipId": "{{$timestamp}}",
+     	"contentType": "audio/mpeg"
      }
      ```
 

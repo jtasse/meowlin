@@ -21,48 +21,12 @@ Resources:
   MeowlinApi:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: dev
-      OpenApiVersion: 3.0.1
-  MeowlinApiProdDeployment:
-    Type: AWS::ApiGateway::Deployment
-    DependsOn:
-    - RequestUploadUrlFunctionUploadsPermissionProd
-    - GetClipResultFunctionGetClipResultPermissionProd
-    Properties:
-      RestApiId:
-        Ref: MeowlinApi
-      Description:
-        Fn::Sub: Prod deployment ${AWS::StackName}
-  RequestUploadUrlFunctionUploadsPermissionProd:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName:
-        Fn::GetAtt:
-        - RequestUploadUrlFunction
-        - Arn
-      Principal: apigateway.amazonaws.com
-      SourceArn:
-        Fn::Sub: arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${MeowlinApi}/prod/POST/uploads
-  GetClipResultFunctionGetClipResultPermissionProd:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName:
-        Fn::GetAtt:
-        - GetClipResultFunction
-        - Arn
-      Principal: apigateway.amazonaws.com
-      SourceArn:
-        Fn::Sub: arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${MeowlinApi}/prod/GET/clips/*
-  MeowlinApiProdStage:
-    Type: AWS::ApiGateway::Stage
-    Properties:
-      RestApiId:
-        Ref: MeowlinApi
       StageName: prod
-      DeploymentId:
-        Ref: MeowlinApiProdDeployment
+      OpenApiVersion: 3.0.1
+      Cors:
+        AllowOrigin: '''http://localhost:3000'''
+        AllowMethods: '''OPTIONS,POST,GET'''
+        AllowHeaders: '''Content-Type'''
   RequestUploadUrlFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -218,10 +182,6 @@ Outputs:
     Description: API Gateway REST API base URL
     Value:
       Fn::Sub: https://${MeowlinApi}.execute-api.${AWS::Region}.amazonaws.com
-  MeowlinApiDevUploadsUrl:
-    Description: dev stage URL for uploads endpoint
-    Value:
-      Fn::Sub: https://${MeowlinApi}.execute-api.${AWS::Region}.amazonaws.com/dev/uploads
   MeowlinApiProdUploadsUrl:
     Description: prod stage URL for uploads endpoint
     Value:

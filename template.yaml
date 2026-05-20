@@ -19,53 +19,16 @@ Globals:
       - arm64
 
 Resources:
-  # SAM manages the dev stage and its deployment entirely.
-  # We add prod as a second stage pointing at the same deployment SAM creates,
-  # referenced via the ServerlessDeploymentApplication convention below.
+  # SAM manages the single prod stage and its deployment.
   MeowlinApi:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: dev
-      OpenApiVersion: "3.0.1"
-
-  # SAM names its auto-created deployment resource as <LogicalId>Deployment<hash>.
-  # Since we can't predict the hash, we create our own explicit deployment for prod
-  # to reference. It must DependsOn all methods (i.e. the Lambda functions whose
-  # events create the API methods) so it captures the full integration.
-  MeowlinApiProdDeployment:
-    Type: AWS::ApiGateway::Deployment
-    DependsOn:
-      - RequestUploadUrlFunctionUploadsPermissionProd
-      - GetClipResultFunctionGetClipResultPermissionProd
-    Properties:
-      RestApiId: !Ref MeowlinApi
-      Description: !Sub "Prod deployment ${AWS::StackName}"
-
-  # Grant API Gateway permission to invoke the Lambda functions from the prod stage.
-  # SAM only generates invoke permissions for its own managed stage (dev).
-  # Without these, prod calls return 403.
-  RequestUploadUrlFunctionUploadsPermissionProd:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !GetAtt RequestUploadUrlFunction.Arn
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${MeowlinApi}/prod/POST/uploads"
-
-  GetClipResultFunctionGetClipResultPermissionProd:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !GetAtt GetClipResultFunction.Arn
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${MeowlinApi}/prod/GET/clips/*"
-
-  MeowlinApiProdStage:
-    Type: AWS::ApiGateway::Stage
-    Properties:
-      RestApiId: !Ref MeowlinApi
       StageName: prod
-      DeploymentId: !Ref MeowlinApiProdDeployment
+      OpenApiVersion: "3.0.1"
+      Cors:
+        AllowOrigin: "'http://localhost:3000'"
+        AllowMethods: "'OPTIONS,POST,GET'"
+        AllowHeaders: "'Content-Type'"
 
   RequestUploadUrlFunction:
     Type: AWS::Serverless::Function
@@ -204,9 +167,6 @@ Outputs:
   MeowlinApiUrl:
     Description: "API Gateway REST API base URL"
     Value: !Sub "https://${MeowlinApi}.execute-api.${AWS::Region}.amazonaws.com"
-  MeowlinApiDevUploadsUrl:
-    Description: "dev stage URL for uploads endpoint"
-    Value: !Sub "https://${MeowlinApi}.execute-api.${AWS::Region}.amazonaws.com/dev/uploads"
   MeowlinApiProdUploadsUrl:
     Description: "prod stage URL for uploads endpoint"
     Value: !Sub "https://${MeowlinApi}.execute-api.${AWS::Region}.amazonaws.com/prod/uploads"

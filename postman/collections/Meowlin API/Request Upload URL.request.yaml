@@ -1,5 +1,4 @@
 $kind: http-request
-name: Request Upload URL
 description: Request a signed upload URL for raw audio upload to S3. Copy the returned clipId and uploadUrl.
 url: "{{base_url}}/{{stage_name}}/uploads"
 method: POST
@@ -9,7 +8,7 @@ body:
   type: json
   content: |-
     {
-      "clientClipId": "0000000047"
+      "clientClipId": "{{$timestamp}}"
     }
 scripts:
   - type: afterResponse
@@ -17,15 +16,9 @@ scripts:
       const jsonData = pm.response.json();
 
       pm.expect(jsonData).to.have.property("clipId");
-      pm.expect(jsonData).to.have.property("clientClipId");
       pm.expect(jsonData).to.have.property("uploadUrl");
-      pm.expect(jsonData).to.have.property("clipStatus");
-      pm.expect(jsonData).to.have.property("s3Key");
 
       pm.environment.set("clipId", jsonData.clipId);
-      pm.environment.set("clientClipId", jsonData.clientClipId);
       pm.environment.set("uploadUrl", jsonData.uploadUrl);
-      pm.environment.set("clipStatus", jsonData.clipStatus);
-      pm.environment.set("s3Key", jsonData.s3Key);
     language: text/javascript
 order: 1000

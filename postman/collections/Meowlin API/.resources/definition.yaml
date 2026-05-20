@@ -1,4 +1,5 @@
 $kind: collection
+name: Meowlin API
 description: Collection for Meowlin local and deployed HTTP API endpoints.
 variables:
   apiBaseUrl: http://127.0.0.1:3000

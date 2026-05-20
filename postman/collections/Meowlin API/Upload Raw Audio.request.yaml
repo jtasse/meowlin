@@ -10,7 +10,7 @@ headers:
 body:
   type: file
   content:
-    src: /C:/dev/github/meowlin/audio_samples/jojo_001.mp3
+    src: /C:/dev/github/meowlin/postman/audio_samples/audio_with_meow_sample.mp3
 scripts:
   - type: afterResponse
     code: |-

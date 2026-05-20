@@ -1,20 +1,42 @@
 # Postman Setup
 
-This folder contains the Postman collection and environments for testing the Meowlin API upload flow. Only the files listed below should be modified by coding assistants.
+This folder contains the Postman collection and environments for testing the Meowlin API upload flow. The maintained source of truth is the file-backed v3 collection under `postman/collections/Meowlin API`.
 
-> **NOTE**: it is possible to make other changes via the Postman Desktop UI
+> **NOTE**: Postman can also be edited via the Desktop UI. When the local resource mapping is active, request changes should appear under `postman/collections/Meowlin API` in real time.
 
 ## Files
 
-- Requests (under `postman/Meowlin API`)
+- Requests (under `postman/collections/Meowlin API`)
 - Environments (under `postman/environments`)
+
+## Source of Truth
+
+- `.postman/resources.yaml` at the repository root is the Native Git mapping file Postman uses to connect local files to workspace resources.
+- `postman/collections/Meowlin API` is the local file-backed collection directory currently mapped to the workspace in `.postman/resources.yaml`.
+
+If Postman is connected to this repo as a local resource, creating a new request inside the linked collection should create a new `*.request.yaml` file under `postman/collections/Meowlin API`.
+
+## Onboarding
+
+Although it is possible to manually import the Postman environments and requests contained in this repo; I recommend using Postman Desktop with Native Git (via the steps below) to ensure your workspace remains synced with the repo.
+
+1. Clone the repo locally.
+2. Open Postman Desktop.
+3. Open the target workspace or create a workspace for this service.
+4. In `Files`, open the repo root: `C:\dev\github\meowlin` or the equivalent local clone path.
+5. Click `Connect to workspace`.
+6. Switch to `Local View`.
+
+Postman should detect the local collection from `postman/collections/Meowlin API` and the environments from `postman/environments`.
+
+If a developer cannot or does not want to use the Native Git workflow, then yes: the fallback is crude. They would need to create or pull a collection in Postman and import or recreate the requests/environments there manually.
 
 ## Environment Variables
 
 Set these values in each environment:
 
 - `base_url`: API base URL without trailing slash.
-  - Example: `https://4fl1zulmr.execute-api.us-east-1.amazonaws.com`
+  - Example: `https://4fl1zuqmc.execute-api.us-east-1.amazonaws.com`
 - `stage_name`: API stage.
 
   - `dev` for development
@@ -49,6 +71,7 @@ Runtime variables populated by scripts:
    - URL: `{{uploadUrl}}`
    - Header: `Content-Type: audio/mpeg`
    - Body: binary `.mp3` file from your local machine
+   - Current sample file: `postman/audio_samples/audio_with_meow_sample.mp3`
 
 3. **Get Clip Result**
    - Method: `GET`

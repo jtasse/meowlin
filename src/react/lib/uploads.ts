@@ -13,6 +13,11 @@ export type RequestUploadUrlRequest = {
     contentType: string
 }
 
+export type UploadRawAudioRequest = {
+    uploadUrl: string
+    file: File
+}
+
 export type RequestUploadUrlResponse = {
     clipId: string
     clientClipId: string
@@ -20,6 +25,11 @@ export type RequestUploadUrlResponse = {
     s3Key: string
     uploadUrl: string
     uploadUrlExpiresInSeconds: number
+}
+
+export type UploadRawAudioResponse = {
+    success: boolean
+    message?: string
 }
 
 export async function requestUploadUrl(
@@ -42,4 +52,21 @@ export async function requestUploadUrl(
     }
 
     return response.json()
+}
+
+export async function uploadRawAudio(
+    payload: UploadRawAudioRequest
+): Promise<void> {
+    const response = await fetch(payload.uploadUrl, {
+        method: "PUT",
+        headers: {
+            "Content-Type": payload.file.type || "audio/mpeg",
+        },
+        body: payload.file,
+    })
+
+    if (!response.ok) {
+        const errorBody = await response.text().catch(() => "")
+        throw new Error(errorBody || "Failed to upload raw audio.")
+    }
 }

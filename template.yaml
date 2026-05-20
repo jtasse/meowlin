@@ -151,6 +151,19 @@ Resources:
       - MeowlinClipProcessingQueuePolicy
     Properties:
       BucketName: !Ref RawAudioBucketName
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins:
+              - http://localhost:3000
+            AllowedMethods:
+              - PUT
+              - GET
+              - HEAD
+            AllowedHeaders:
+              - "*"
+            ExposedHeaders:
+              - ETag
+            MaxAge: 3000
       NotificationConfiguration:
         QueueConfigurations:
           - Event: s3:ObjectCreated:*

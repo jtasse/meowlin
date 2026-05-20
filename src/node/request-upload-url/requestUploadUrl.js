@@ -68,13 +68,21 @@ exports.handler = async (event) => {
 		}
 	}
 
-	const { clientClipId } = requestBody
+	const { clientClipId, contentType } = requestBody
 
 	if (!clientClipId) {
 		return {
 			statusCode: 400,
 			headers: CORS_HEADERS,
 			body: JSON.stringify({ message: "clientClipId is required." }),
+		}
+	}
+
+	if (!contentType) {
+		return {
+			statusCode: 400,
+			headers: CORS_HEADERS,
+			body: JSON.stringify({ message: "contentType is required." }),
 		}
 	}
 
@@ -103,7 +111,7 @@ exports.handler = async (event) => {
 		const putObjectCommand = new PutObjectCommand({
 			Bucket: RAW_AUDIO_BUCKET_NAME,
 			Key: s3Key,
-			ContentType: "audio/mpeg",
+			ContentType: contentType,
 		})
 		const uploadUrl = await getSignedUrl(s3Client, putObjectCommand, {
 			expiresIn: UPLOAD_URL_EXPIRES_IN_SECONDS,

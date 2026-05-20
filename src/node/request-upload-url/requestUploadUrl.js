@@ -16,6 +16,10 @@ const CLIPS_TABLE_NAME = process.env.CLIPS_TABLE_NAME
 const RAW_AUDIO_BUCKET_NAME = process.env.RAW_AUDIO_BUCKET_NAME
 const UPLOAD_URL_EXPIRES_IN_SECONDS = 900 // 15 minutes
 const S3_KEY_PREFIX = "uploads"
+const CORS_HEADERS = {
+	"Content-Type": "application/json",
+	"Access-Control-Allow-Origin": "http://localhost:3000",
+}
 
 exports.handler = async (event) => {
 	console.log(
@@ -38,7 +42,7 @@ exports.handler = async (event) => {
 		)
 		return {
 			statusCode: 500,
-			headers: { "Content-Type": "application/json" },
+			headers: CORS_HEADERS,
 			body: JSON.stringify({
 				message: "Server configuration error.",
 			}),
@@ -48,7 +52,7 @@ exports.handler = async (event) => {
 	if (!event.body) {
 		return {
 			statusCode: 400,
-			headers: { "Content-Type": "application/json" },
+			headers: CORS_HEADERS,
 			body: JSON.stringify({ message: "Request body is missing." }),
 		}
 	}
@@ -59,7 +63,7 @@ exports.handler = async (event) => {
 	} catch (error) {
 		return {
 			statusCode: 400,
-			headers: { "Content-Type": "application/json" },
+			headers: CORS_HEADERS,
 			body: JSON.stringify({ message: "Invalid JSON in request body." }),
 		}
 	}
@@ -69,7 +73,7 @@ exports.handler = async (event) => {
 	if (!clientClipId) {
 		return {
 			statusCode: 400,
-			headers: { "Content-Type": "application/json" },
+			headers: CORS_HEADERS,
 			body: JSON.stringify({ message: "clientClipId is required." }),
 		}
 	}
@@ -107,7 +111,7 @@ exports.handler = async (event) => {
 
 		return {
 			statusCode: 200,
-			headers: { "Content-Type": "application/json" },
+			headers: CORS_HEADERS,
 			body: JSON.stringify({
 				clipId,
 				clientClipId,
@@ -129,7 +133,7 @@ exports.handler = async (event) => {
 		if (error.name === "ConditionalCheckFailedException") {
 			return {
 				statusCode: 409, // Conflict
-				headers: { "Content-Type": "application/json" },
+				headers: CORS_HEADERS,
 				body: JSON.stringify({
 					message: `Clip with ID ${clipId} already exists.`,
 				}),
@@ -137,7 +141,7 @@ exports.handler = async (event) => {
 		}
 		return {
 			statusCode: 500,
-			headers: { "Content-Type": "application/json" },
+			headers: CORS_HEADERS,
 			body: JSON.stringify({
 				message: "Failed to process upload request.",
 				error: error.message,

@@ -228,3 +228,14 @@
 		width: 100%;
 	}
 }
+
+.requestResult {
+	margin-top: 16px;
+	padding: 16px;
+	border-radius: 12px;
+	background: rgba(220, 38, 38, 0.08);
+	border: 1px solid rgba(220, 38, 38, 0.12);
+	color: black;
+	font-size: 0.95rem;
+	line-height: 1.5;
+}

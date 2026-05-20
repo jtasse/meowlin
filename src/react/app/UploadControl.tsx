@@ -3,6 +3,7 @@
 import { useRef, useState } from "react"
 
 import styles from "./page.module.css"
+import { requestUploadUrl, RequestUploadUrlResponse } from "@/lib/uploads"
 
 type UploadControlProps = {
 	onFileSelected?: (file: File) => void
@@ -11,8 +12,17 @@ type UploadControlProps = {
 export function UploadControl({ onFileSelected }: UploadControlProps) {
 	const fileInputRef = useRef<HTMLInputElement>(null)
 	const [selectedFile, setSelectedFile] = useState<File | null>(null)
+	const [isRequestingUploadUrl, setIsRequestingUploadUrl] =
+		useState<boolean>(false)
 	const [isUploading, setIsUploading] = useState<boolean>(false)
 	const [uploadProgress, setUploadProgress] = useState<number>(0)
+
+	const [requestState, setRequestState] = useState<
+		"idle" | "loading" | "success" | "error"
+	>("idle")
+	const [uploadRequest, setUploadRequest] =
+		useState<RequestUploadUrlResponse | null>(null)
+	const [requestError, setRequestError] = useState<string | null>(null)
 
 	function handleBrowseClick() {
 		fileInputRef.current?.click()
@@ -31,6 +41,33 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 		if (selectedFile) {
 			setIsUploading(true)
 			// TODO: Implement upload logic
+		}
+	}
+
+	async function handleRequestUploadClick() {
+		if (!selectedFile) return
+
+		setRequestState("loading")
+		setRequestError(null)
+		setUploadRequest(null)
+		setIsRequestingUploadUrl(true)
+
+		try {
+			const result = await requestUploadUrl({
+				clientClipId: crypto.randomUUID(),
+				fileName: selectedFile.name,
+				contentType: selectedFile.type || "audio/mpeg",
+			})
+
+			setUploadRequest(result)
+			setRequestState("success")
+		} catch (error) {
+			setRequestState("error")
+			setRequestError(
+				error instanceof Error ? error.message : "Unexpected error",
+			)
+		} finally {
+			setIsRequestingUploadUrl(false)
 		}
 	}
 
@@ -64,9 +101,14 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 						<button
 							type="button"
 							className={styles.secondaryButton}
-							onClick={handleUploadClick}
+							onClick={handleRequestUploadClick}
+							disabled={
+								isRequestingUploadUrl ||
+								isUploading ||
+								requestState === "loading"
+							}
 						>
-							Upload selected file
+							Request Upload URL
 						</button>
 						<div className={styles.progressBar}>
 							<div
@@ -77,7 +119,27 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 					</>
 				)}
 			</div>
-			<p className={styles.uploadStatus}>{isUploading ? "Uploading..." : ""}</p>
+			<p className={styles.uploadStatus}>
+				{isRequestingUploadUrl ? "Requesting upload URL..." : ""}
+			</p>
+			{requestState === "error" && (
+				<p className={styles.errorText}>
+					Error requesting upload URL: {requestError}
+				</p>
+			)}
+			{requestState === "success" && uploadRequest && (
+				<div className={styles.requestResult}>
+					<p>Upload URL requested successfully!</p>
+					<p>Clip ID: {uploadRequest.clipId}</p>
+					<p>Client Clip ID: {uploadRequest.clientClipId}</p>
+					<p>Clip Status: {uploadRequest.clipStatus}</p>
+					<p>S3 Key: {uploadRequest.s3Key}</p>
+					<p>
+						Upload URL Expires In: {uploadRequest.uploadUrlExpiresInSeconds}{" "}
+						seconds
+					</p>
+				</div>
+			)}
 		</div>
 	)
 }

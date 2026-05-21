@@ -5,3 +5,4 @@ __pycache__/
 *.pyc
 postman/environments/*.local.json
 postman/environments/meowlin-prod.environment.yaml
+.vscode

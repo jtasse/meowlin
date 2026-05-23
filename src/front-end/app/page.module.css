@@ -91,33 +91,35 @@
 }
 
 .uploadControl:has(.revealLayer) {
-	--reveal-mask-top-pull: calc(16px + 13.5rem);
-	/* Space for burst bottom + former frame bottom inset (revealArena 16px padding). */
-	--reveal-bottom-bleed: calc(16px + var(--frame-inset-bottom));
+	gap: 0;
 }
 
+/*
+ * Lower pane: height tracks the scaled 16:9 video (1:1, no letterbox gaps).
+ * Tune --reveal-backdrop-scale, offsets, and cat anchors on .revealLayer.
+ */
 .revealLayer {
-	--reveal-gap: 28px;
-	--reveal-col-left-width: calc(
-		(100% - var(--reveal-gap)) * 1.15 / (1.15 + 0.85)
-	);
-	/* Burst size: 1 = 100%, 1.08 ≈ 10% larger than 0.98, etc. */
-	--reveal-burst-scale: 0.98;
-	/* Horizontal nudge: positive = right, negative = left. */
-	--reveal-burst-offset-x: 11.0%;
-	/* Extra space on the left so scaled/offset burst isn't clipped. */
-	--reveal-burst-bleed-left: clamp(48px, 14vw, 120px);
-	/* Right edge of burst image that fades into red (% of the image width). */
-	--reveal-burst-image-fade: 32%;
+	--reveal-video-aspect: 1.7777777778; /* 16 / 9 */
+	--reveal-backdrop-scale: 0.9;
+	--reveal-backdrop-offset-x: 0px;
+	--reveal-backdrop-offset-y: 0px;
+	--reveal-cat-anchor-x: 25%;
+	--reveal-cat-anchor-y: 46%;
+	--reveal-cat-stage-size: min(340px, 38vw);
 	position: relative;
-	width: 100%;
-	min-height: min(420px, 55vh);
-	margin-top: calc(-1 * var(--reveal-mask-top-pull));
-	padding-top: var(--reveal-mask-top-pull);
-	padding-bottom: var(--reveal-bottom-bleed);
-	overflow: visible;
+	width: calc(100% + 2 * var(--frame-inset-x));
+	margin-left: calc(-1 * var(--frame-inset-x));
+	margin-right: calc(-1 * var(--frame-inset-x));
 	pointer-events: none;
 	isolation: isolate;
+}
+
+/* Pane height = full width × 9/16 × scale (padding % is relative to width). */
+.revealMediaOuter {
+	position: relative;
+	width: 100%;
+	padding-bottom: calc(100% / var(--reveal-video-aspect) * var(--reveal-backdrop-scale));
+	overflow: hidden;
 }
 
 .uploadUiLayer {
@@ -296,82 +298,52 @@
 }
 
 .revealCat {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	overflow: visible;
-	position: relative;
+	grid-column: 1;
+	position: static;
 	z-index: 10;
-	min-height: min(420px, 52vh);
+	overflow: visible;
 }
 
-/*
- * Burst in the cat column, centered behind the cat; fade is on the image itself.
- */
 .revealBurstClip {
 	position: absolute;
-	left: calc(
-		-1 * var(--frame-inset-x) - var(--reveal-burst-bleed-left)
-	);
-	width: calc(
-		var(--reveal-col-left-width) + 8px + var(--frame-inset-x) +
-			var(--reveal-burst-bleed-left)
-	);
-	top: 0;
-	bottom: 0;
-	z-index: 4;
-	display: flex;
-	align-items: flex-end;
-	justify-content: center;
-	overflow: visible;
+	inset: 0;
+	z-index: 0;
 	pointer-events: none;
 }
 
 .revealBackdropImg {
+	position: absolute;
+	inset: 0;
 	display: block;
-	width: auto;
-	height: min(520px, 62vh);
-	max-width: min(115%, 620px);
-	object-fit: contain;
-	object-position: center bottom;
-	transform: scale(var(--reveal-burst-scale))
-		translateX(var(--reveal-burst-offset-x));
-	transform-origin: center bottom;
-	-webkit-mask-image: linear-gradient(
-		to right,
-		#000 0%,
-		#000 calc(100% - var(--reveal-burst-image-fade)),
-		transparent 100%
-	);
-	mask-image: linear-gradient(
-		to right,
-		#000 0%,
-		#000 calc(100% - var(--reveal-burst-image-fade)),
-		transparent 100%
-	);
+	width: 100%;
+	height: 100%;
+	object-fit: fill;
+	object-position: center;
+	transform: translate(var(--reveal-backdrop-offset-x), var(--reveal-backdrop-offset-y));
 }
 
 .catStage {
-	position: relative;
+	position: absolute;
+	left: var(--reveal-cat-anchor-x);
+	top: var(--reveal-cat-anchor-y);
+	transform: translate(-50%, -50%);
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: min(420px, 52vw);
-	height: min(420px, 52vw);
+	width: var(--reveal-cat-stage-size);
+	height: var(--reveal-cat-stage-size);
 	overflow: visible;
 	z-index: 1;
 }
 
 .catImageWrap {
 	position: relative;
-	top: 5%;
-	right: 20%;
 	z-index: 2;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 86%;
-	height: 86%;
+	width: 92%;
+	height: 92%;
 }
 
 .catImage {
@@ -384,35 +356,18 @@
 	filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
 }
 
-/* Soft red wash over the transition zone + breed column (no hard vertical line). */
-.revealGuessPanel {
-	position: absolute;
-	left: 0;
-	right: calc(-1 * var(--frame-inset-x));
-	top: 0;
-	bottom: 0;
-	z-index: 5;
-	pointer-events: none;
-	background: linear-gradient(
-		90deg,
-		transparent 0%,
-		transparent 48%,
-		rgba(254, 30, 3, 0.45) 56%,
-		var(--page-red) 68%
-	);
-}
-
 .revealArena {
 	display: grid;
 	grid-template-columns: 1.15fr 0.85fr;
 	align-items: center;
 	gap: 16px 28px;
+	position: absolute;
+	inset: 0;
+	z-index: 1;
 	width: 100%;
-	margin-top: 4px;
-	padding: 12px 8px 16px;
+	height: 100%;
+	padding: 0;
 	overflow: visible;
-	position: relative;
-	z-index: 10;
 	pointer-events: none;
 }
 
@@ -617,9 +572,10 @@
 		grid-column: 1;
 	}
 
-	.catStage {
-		width: min(300px, 72vw);
-		height: min(300px, 72vw);
+	.revealLayer {
+		--reveal-cat-anchor-x: 44%;
+		--reveal-cat-anchor-y: 36%;
+		--reveal-cat-stage-size: min(280px, 64vw);
 	}
 
 	.revealGuess {

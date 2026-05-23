@@ -34,7 +34,34 @@ npm run dev
 npm run build
 npm run start
 npm run lint
+npm run optimize-images
+npm run optimize-reveal-background -- "C:\path\to\CatBreedIdTemplate.mp4"
 ```
+
+### Reveal background video
+
+The animated burst behind the cat comes from `cat_breed_id_bg_looped.mov` (or any Resolve export). Encode it for the web with ffmpeg (installed on your PATH):
+
+```bash
+npm run optimize-reveal-background
+```
+
+Default input is `%USERPROFILE%\Videos\cat_breed_id_bg_looped.mov`, or pass a path after `--`.
+
+This writes:
+
+- `public/videos/reveal-background.webm` — VP9 (~5 MB), used by Chrome/Firefox/Edge
+- `public/videos/reveal-background.mp4` — H.264 (~4 MB), Safari fallback
+- `images/reveal_background.webp` — poster + static fallback (`prefers-reduced-motion`)
+
+`RevealBackground` keeps the same layout/CSS; cat, breed label, and confidence still come from `WhatsThatCatBreed` on top.
+
+Tune the animated backdrop in `app/page.module.css` on `.revealLayer`:
+
+- `--reveal-backdrop-scale` — uniform size (`0.9` = 10% smaller)
+- `--reveal-backdrop-offset-x` / `--reveal-backdrop-offset-y` — nudge the video (e.g. `4px`, `1%`)
+- `--reveal-cat-anchor-x` / `--reveal-cat-anchor-y` — cat center on the burst (`36%`, `54%`, etc.)
+- `--reveal-cat-stage-size` — cat image box size
 
 ## Structure
 

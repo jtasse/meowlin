@@ -47,7 +47,7 @@ export function getBreedImage(breed: string): StaticImageData | null {
 const BREED_IMAGE_DISPLAY: Partial<
 	Record<string, { scale?: number; offsetX?: string }>
 > = {
-	american_shorthair: { scale: 1.4, offsetX: "10%" },
+	american_shorthair: { scale: 1.12 },
 }
 
 export function getBreedImageDisplay(breed: string): {

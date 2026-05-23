@@ -175,6 +175,14 @@ Content-Type: audio/mpeg
 fileName: {clientClipId}.mp3
 ```
 
+## Repository Layout
+
+```text
+src/api/       # Lambda handlers (Node.js and Python)
+src/front-end/  # Next.js app
+template.yaml  # SAM infrastructure
+```
+
 ## SAM Guidance
 
 Use SAM as the infrastructure source of truth.

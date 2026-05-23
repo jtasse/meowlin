@@ -219,21 +219,22 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 
 			{showReveal && (
 				<div className={styles.revealLayer}>
-					<RevealBackground />
-					<div className={styles.revealGuessPanel} aria-hidden="true" />
-					<WhatsThatCatBreed
-						revealed={revealComplete}
-						identifiedBreed={
-							revealComplete
-								? (getClipResultRequest?.identifiedBreed ?? null)
-								: null
-						}
-						confidenceScore={
-							revealComplete
-								? getClipResultRequest?.confidenceScore ?? null
-								: null
-						}
-					/>
+					<div className={styles.revealMediaOuter}>
+						<RevealBackground />
+						<WhatsThatCatBreed
+							revealed={revealComplete}
+							identifiedBreed={
+								revealComplete
+									? (getClipResultRequest?.identifiedBreed ?? null)
+									: null
+							}
+							confidenceScore={
+								revealComplete
+									? getClipResultRequest?.confidenceScore ?? null
+									: null
+							}
+						/>
+					</div>
 				</div>
 			)}
 		</div>

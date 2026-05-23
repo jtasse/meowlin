@@ -2,8 +2,11 @@
     "name": "meowlin",
     "version": "1.0.0",
     "description": "Meowlin - AWS Serverless Cat ID Demo",
-    "main": "src/node/request-upload-url/requestUploadUrl.js",
-    "repository": "https://github.com/jtj-dev/meowlin",
+    "main": "src/api/request-upload-url/requestUploadUrl.js",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/jtj-dev/meowlin.git"
+    },
     "author": "SAM CLI",
     "license": "MIT",
     "scripts": {

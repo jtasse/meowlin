@@ -48,12 +48,12 @@ Before running the commands below, ensure you have the following installed:
 
 ## Frontend
 
-The Next.js frontend lives in `src/react`.
+The Next.js frontend lives in `src/front-end`.
 
 To run it locally:
 
 ```powershell
-cd src/react
+cd src/front-end
 npm install
 npm run dev
 ```

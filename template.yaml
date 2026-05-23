@@ -34,7 +34,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: meowlin-request-upload-url
-      Handler: src/node/request-upload-url/requestUploadUrl.handler
+      Handler: src/api/request-upload-url/requestUploadUrl.handler
       CodeUri: .
       Environment:
         Variables:
@@ -69,7 +69,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: meowlin-get-clip-result
-      Handler: src/node/get-clip-result/getClipResult.handler
+      Handler: src/api/get-clip-result/getClipResult.handler
       CodeUri: .
       Environment:
         Variables:
@@ -92,8 +92,8 @@ Resources:
       Runtime: python3.12
       # Inherits arm64 from Globals — ensure Python dependencies are built for arm64,
       # or override with Architectures: [x86_64] if using pre-built x86 packages.
-      Handler: app.lambda_handler
-      CodeUri: src/python/meowlin_process_clip
+      Handler: processClip.lambda_handler
+      CodeUri: src/api/process-clip
       Environment:
         Variables:
           CLIPS_TABLE_NAME: MeowlinClips

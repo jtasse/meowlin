@@ -4,14 +4,14 @@ This folder contains the Meowlin React frontend built with Next.js.
 
 ## Location
 
-Frontend root: `src/react`
+Frontend root: `src/front-end`
 
 ## Run The Dev Server
 
-From the React folder:
+From the frontend folder:
 
 ```bash
-cd src/react
+cd src/front-end
 npm install
 npm run dev
 ```
@@ -21,13 +21,13 @@ Then open `http://localhost:3000`.
 You can also start it from the repository root:
 
 ```bash
-npm --prefix src/react install
-npm --prefix src/react run dev
+npm --prefix src/front-end install
+npm --prefix src/front-end run dev
 ```
 
 ## Useful Commands
 
-Run these from `src/react`:
+Run these from `src/front-end`:
 
 ```bash
 npm run dev

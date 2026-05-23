@@ -199,9 +199,19 @@ FAILED
 ConditionExpression: "attribute_not_exists(clipId)"
 ```
 
+## Source Layout
+
+```text
+src/api/
+  request-upload-url/requestUploadUrl.js   # POST /uploads
+  get-clip-result/getClipResult.js         # GET /clips/{clipId}
+  process-clip/processClip.py              # SQS clip processor
+src/front-end/                              # Next.js UI
+```
+
 ## Runtime and Language Choices
 
-- Node.js is sued for API-oriented Lambda functions such as `RequestUploadUrlFunction`.
+- Node.js is used for API-oriented Lambda functions such as `RequestUploadUrlFunction`.
 - Node.js could have also been used to implement the mocked `ProcessClipFunction`, but Python was chosen as it would be a better fit if real classification were added later
 
 ## SAM / Infrastructure Approach

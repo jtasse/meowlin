@@ -1,42 +1,24 @@
-import Image from "next/image"
 import type { ReactNode } from "react"
 
 import styles from "./page.module.css"
 
 type AuthFrameProps = {
-	eyebrow: string
-	title: string
-	description: string
+	description?: string
 	children: ReactNode
 }
 
-export function AuthFrame({
-	eyebrow,
-	title,
-	description,
-	children,
-}: AuthFrameProps) {
+export function AuthFrame({ description, children }: AuthFrameProps) {
 	return (
 		<div className={styles.pageShell}>
 			<section className={styles.frame}>
-				<div className={styles.brandPanel}>
-					<div className={styles.brandBadge}>{eyebrow}</div>
-					<div className={styles.brandCopy}>
-						<h1 className={styles.brandTitle}>{title}</h1>
-						<p className={styles.brandDescription}>{description}</p>
-					</div>
-					<div className={styles.artPanel}>
-						<Image
-							src="/meowlin-small.png"
-							alt="Illustrated Meowlin cat mascot"
-							width={596}
-							height={496}
-							className={styles.brandImage}
-							priority
-						/>
-					</div>
-				</div>
-
+				<h1 className={styles.wordArtTitle}>
+					<span className={styles.wordArtLine}>
+						What&apos;s that cat breed?
+					</span>
+				</h1>
+				{description && (
+					<p className={styles.frameDescription}>{description}</p>
+				)}
 				<div className={styles.contentPanel}>{children}</div>
 			</section>
 		</div>

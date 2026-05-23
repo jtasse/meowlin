@@ -16,7 +16,7 @@ CLIPS_TABLE_NAME = os.environ.get("CLIPS_TABLE_NAME")
 RESULTS = [
     {"breed": "Siamese", "confidence": 0.92},
     {"breed": "Maine Coon", "confidence": 0.81},
-    {"breed": "Domestic Shorthair", "confidence": 0.76},
+    {"breed": "American Shorthair", "confidence": 0.76},
 ]
 
 NO_RESULT = {"breed": None, "confidence": None}

@@ -9,6 +9,8 @@ import {
 	getClipResult,
 	GetClipResultResponse,
 } from "@/lib/uploads"
+import { RevealBackground } from "./RevealBackground"
+import { WhatsThatCatBreed } from "./WhatsThatCatBreed"
 
 type UploadControlProps = {
 	onFileSelected?: (file: File) => void
@@ -36,11 +38,9 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 	const fileInputRef = useRef<HTMLInputElement>(null)
 	const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
-	// Get Clip Result
 	const [getClipResultRequest, setGetClipResultRequest] =
 		useState<GetClipResultResponse | null>(null)
 
-	// Combined Upload
 	const [uploadPhase, setUploadPhase] = useState<UploadPhase>("idle")
 	const [uploadStatusMessage, setUploadStatusMessage] = useState("")
 	const [uploadError, setUploadError] = useState<string | null>(null)
@@ -49,8 +49,11 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 		uploadPhase === "success"
 			? styles.progressFillSuccess
 			: uploadPhase === "error"
-			? styles.progressFillError
-			: styles.progressFillActive
+				? styles.progressFillError
+				: styles.progressFillActive
+
+	const showReveal = uploadPhase !== "idle"
+	const revealComplete = uploadPhase === "success"
 
 	function resetUploadState(options?: { clearSelectedFile?: boolean }) {
 		setGetClipResultRequest(null)
@@ -67,6 +70,10 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 	}
 
 	function handleBrowseClick() {
+		if (selectedFile) {
+			handleResetClick()
+			return
+		}
 		fileInputRef.current?.click()
 	}
 
@@ -124,7 +131,7 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 			}
 
 			setUploadPhase("success")
-			setUploadStatusMessage("Upload flow completed.")
+			setUploadStatusMessage("Breed identification completed.")
 		} catch (error) {
 			setUploadPhase("error")
 			setUploadError(
@@ -136,78 +143,98 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 
 	return (
 		<div className={styles.uploadControl}>
-			<button
-				type="button"
-				onClick={handleBrowseClick}
-				className={styles.uploadButton}
-			>
-				Choose audio file
-			</button>
-			<input
-				ref={fileInputRef}
-				type="file"
-				accept="audio/*"
-				onChange={handleFileChange}
-				className="hidden"
-			/>
-			<p className={styles.uploadStatus}>
-				{selectedFile
-					? `Selected file: ${selectedFile.name}`
-					: "Choose an audio sample to begin the upload flow."}
-			</p>
-			<div className={styles.uploadActions}>
+			<div className={styles.uploadUiLayer}>
+			<div className={styles.stepRow}>
+				<div className={styles.stepBox}>
+					<button
+						type="button"
+						onClick={handleBrowseClick}
+						className={styles.uploadButton}
+					>
+						Choose audio file
+					</button>
+					<input
+						ref={fileInputRef}
+						type="file"
+						accept="audio/*"
+						onChange={handleFileChange}
+						className="hidden"
+					/>
+					<p className={styles.stepHint}>
+						{selectedFile
+							? `Selected: ${selectedFile.name}`
+							: "Choose an audio sample to begin."}
+					</p>
+				</div>
+
 				{selectedFile && (
 					<>
-						<button
-							type="button"
-							className={styles.secondaryButton}
-							onClick={handleUploadClick}
-							disabled={uploadPhase !== "idle"}
-						>
-							Upload audio file
-						</button>
-						<button
-							type="button"
-							className={styles.secondaryButton}
-							onClick={handleResetClick}
-						>
-							Reset
-						</button>
+						<span className={styles.stepArrow} aria-hidden="true">
+							→
+						</span>
+						<div className={styles.stepBox}>
+							<button
+								type="button"
+								className={styles.uploadButton}
+								onClick={handleUploadClick}
+								disabled={uploadPhase !== "idle"}
+							>
+								Upload
+							</button>
+							<p className={styles.stepHint}>
+								Upload your clip for breed identification.
+							</p>
+						</div>
+
+						<div className={`${styles.stepBox} ${styles.stepBoxReset}`}>
+							<button
+								type="button"
+								className={`${styles.uploadButton} ${styles.resetAside}`}
+								onClick={handleResetClick}
+							>
+								Reset
+							</button>
+						</div>
 					</>
 				)}
 			</div>
-			{selectedFile && uploadPhase !== "idle" && (
-				<div className={styles.uploadStatus}>
+
+			{showReveal && (
+				<div className={styles.statusPanel}>
 					<div className={styles.progressBar} aria-hidden="true">
 						<div
 							className={`${styles.progressFill} ${progressFillClassName}`}
 							style={{ width: `${uploadProgress}%` }}
 						/>
 					</div>
-					<p>{uploadStatusMessage}</p>
+					{uploadStatusMessage && (
+						<p className={styles.progressStatus}>{uploadStatusMessage}</p>
+					)}
 					{uploadError && (
-						<p className={styles.errorText}>Error: {uploadError}</p>
+						<p className={styles.errorText}>{uploadError}</p>
 					)}
 				</div>
 			)}
-			{getClipResultRequest && uploadPhase === "success" && (
-				<p className={styles.successText}>
-					Cat Breed:{" "}
-					{getClipResultRequest.identifiedBreed != null
-						? getClipResultRequest.identifiedBreed
-						: "Unknown"}{" "}
-				</p>
-			)}
-			{getClipResultRequest?.identifiedBreed && (
-				<p className={styles.successText}>
-					{"Confidence: " +
-						(getClipResultRequest.confidenceScore !== null
-							? `${(getClipResultRequest.confidenceScore * 100).toFixed(2)}%`
-							: "N/A")}
-				</p>
-			)}
-			{uploadPhase === "error" && (
-				<p className={styles.errorText}>An error occurred: {uploadError}</p>
+			</div>
+
+			{showReveal && (
+				<div className={styles.revealLayer}>
+					<RevealBackground />
+					<div className={styles.revealGuessPanel} aria-hidden="true" />
+					<WhatsThatCatBreed
+						revealed={revealComplete}
+						identifiedBreed={
+							revealComplete
+								? (getClipResultRequest?.identifiedBreed ?? null)
+								: null
+						}
+						confidenceScore={
+							revealComplete
+								? getClipResultRequest?.confidenceScore ?? null
+								: null
+						}
+					/>
+				</div>
 			)}
 		</div>
 	)

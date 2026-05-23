@@ -70,7 +70,7 @@ exports.handler = async (event) => {
 		return {
 			statusCode: 500,
 			headers: CORS_HEADERS,
-			body: JSON.stringify({ message: "Failed to retrieve clip result." }),
+			body: JSON.stringify({ message: "Failed to retrieve clip result. Please try again." }),
 		}
 	}
 }

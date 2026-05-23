@@ -1,187 +1,265 @@
 .pageShell {
+	--page-red: #fe1e03;
+	--page-surface: #0f172a;
 	min-height: 100vh;
-	padding: 32px 20px;
-	background: radial-gradient(circle at top left, #fde68a 0, transparent 24%),
-		radial-gradient(circle at top right, #fecaca 0, transparent 26%),
-		linear-gradient(180deg, #fffdf8 0%, #fff7ed 52%, #ffffff 100%);
+	padding: 24px 16px 40px;
+	background: var(--page-surface);
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	overflow: visible;
 }
 
 .frame {
-	width: min(1180px, 100%);
-	display: grid;
-	grid-template-columns: 1.05fr 0.95fr;
-	border-radius: 32px;
-	overflow: hidden;
-	background: rgba(255, 255, 255, 0.9);
-	border: 1px solid rgba(24, 24, 27, 0.08);
-	box-shadow: 0 28px 90px rgba(24, 24, 27, 0.12),
-		inset 0 1px 0 rgba(255, 255, 255, 0.75);
-}
-
-.brandPanel {
-	padding: 40px;
-	background: linear-gradient(
-			165deg,
-			rgba(255, 251, 235, 0.98),
-			rgba(255, 237, 213, 0.92)
-		),
-		linear-gradient(120deg, #ffffff, #fff7ed);
-	border-right: 1px solid rgba(24, 24, 27, 0.08);
+	--frame-inset-x: 28px;
+	--frame-inset-bottom: 36px;
+	width: min(1060px, 100%);
 	display: flex;
 	flex-direction: column;
-	gap: 24px;
-}
-
-.brandBadge {
-	width: fit-content;
-	padding: 10px 16px;
-	border-radius: 9999px;
-	background: rgba(255, 255, 255, 0.8);
-	border: 1px solid rgba(220, 38, 38, 0.12);
-	color: #b91c1c;
-	font-size: 0.78rem;
-	font-weight: 700;
-	letter-spacing: 0.12em;
-	text-transform: uppercase;
-}
-
-.brandCopy {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	max-width: 28rem;
-}
-
-.brandTitle {
-	font-size: clamp(1.3rem, 3vw, 2.5rem);
-	line-height: 0.95;
-	font-weight: 800;
-	letter-spacing: -0.05em;
-	color: #18181b;
-}
-
-.brandDescription {
-	font-size: 1rem;
-	line-height: 1.7;
-	color: #57534e;
-}
-
-.artPanel {
-	position: relative;
-	display: flex;
 	align-items: center;
-	justify-content: center;
-	min-height: 360px;
-	padding: 18px;
-	border-radius: 28px;
-	background: radial-gradient(
-			circle at center,
-			rgba(255, 255, 255, 0.96),
-			rgba(255, 255, 255, 0.75)
-		),
-		linear-gradient(
-			135deg,
-			rgba(255, 255, 255, 0.85),
-			rgba(254, 215, 170, 0.55)
-		);
-	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+	gap: 18px;
+	padding: 28px var(--frame-inset-x) var(--frame-inset-bottom);
+	border-radius: 16px;
+	background: var(--page-red);
+	border: 3px solid #5c2828;
+	box-shadow: 0 0 0 1px #3d1a1a, 0 16px 40px rgba(40, 15, 15, 0.35),
+		inset 0 1px 0 rgba(255, 255, 255, 0.12);
+	position: relative;
+	z-index: 2;
+	overflow: hidden;
 }
 
-.brandImage {
-	width: 100%;
-	height: auto;
-	max-width: 520px;
-	object-fit: contain;
-	filter: drop-shadow(0 20px 30px rgba(24, 24, 27, 0.18));
+/* Reveal: drop bottom padding so the border sits on the burst; clip below it. */
+.frame:has(.revealLayer) {
+	padding-bottom: 0;
+	overflow: hidden;
+}
+
+.wordArtTitle {
+	margin: 0;
+	padding: 0;
+	text-align: center;
+	font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+	font-weight: 900;
+	font-style: italic;
+	line-height: 1.05;
+	letter-spacing: 0.02em;
+	position: relative;
+	z-index: 2;
+}
+
+.wordArtLine {
+	display: inline;
+	font-size: clamp(1.75rem, 5.5vw, 3.75rem);
+	color: #ffe500;
+	-webkit-text-stroke: 4px #1e40af;
+	paint-order: stroke fill;
+	text-shadow: 4px 4px 0 #1e3a8a, -2px -2px 0 #1e3a8a, 2px -2px 0 #1e3a8a,
+		-2px 2px 0 #1e3a8a, 0 5px 0 #172554, 0 7px 14px rgba(0, 0, 0, 0.35);
+	filter: drop-shadow(0 2px 0 #60a5fa);
+}
+
+.frameDescription {
+	margin: 0;
+	max-width: 42rem;
+	text-align: center;
+	font-size: 0.95rem;
+	line-height: 1.55;
+	color: #f0e6e4;
+	text-shadow: 0 1px 2px rgba(40, 15, 15, 0.4);
+	position: relative;
+	z-index: 2;
 }
 
 .contentPanel {
-	padding: 48px 40px;
+	width: 100%;
 	display: flex;
 	flex-direction: column;
-	justify-content: flex-start;
-	background: linear-gradient(
-		180deg,
-		rgba(255, 255, 255, 0.96),
-		rgba(250, 250, 249, 0.98)
-	);
+	align-items: stretch;
+	position: relative;
+	z-index: 2;
 }
 
 .uploadControl {
+	--upload-button-height: 40px;
 	display: flex;
 	flex-direction: column;
+	align-items: stretch;
+	gap: 16px;
+	width: 100%;
+	position: relative;
+}
+
+.uploadControl:has(.revealLayer) {
+	--reveal-mask-top-pull: calc(16px + 13.5rem);
+	/* Space for burst bottom + former frame bottom inset (revealArena 16px padding). */
+	--reveal-bottom-bleed: calc(16px + var(--frame-inset-bottom));
+}
+
+.revealLayer {
+	--reveal-gap: 28px;
+	--reveal-col-left-width: calc(
+		(100% - var(--reveal-gap)) * 1.15 / (1.15 + 0.85)
+	);
+	/* Burst size: 1 = 100%, 1.08 ≈ 10% larger than 0.98, etc. */
+	--reveal-burst-scale: 0.98;
+	/* Horizontal nudge: positive = right, negative = left. */
+	--reveal-burst-offset-x: 11.0%;
+	/* Extra space on the left so scaled/offset burst isn't clipped. */
+	--reveal-burst-bleed-left: clamp(48px, 14vw, 120px);
+	/* Right edge of burst image that fades into red (% of the image width). */
+	--reveal-burst-image-fade: 32%;
+	position: relative;
+	width: 100%;
+	min-height: min(420px, 55vh);
+	margin-top: calc(-1 * var(--reveal-mask-top-pull));
+	padding-top: var(--reveal-mask-top-pull);
+	padding-bottom: var(--reveal-bottom-bleed);
+	overflow: visible;
+	pointer-events: none;
+	isolation: isolate;
+}
+
+.uploadUiLayer {
+	position: relative;
+	z-index: 10;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 100%;
+	anchor-name: --upload-ui;
+}
+
+/* Mask the top of the reveal burst behind the control row. */
+.uploadControl:has(.revealLayer) .uploadUiLayer {
+	margin-left: calc(-1 * var(--frame-inset-x));
+	margin-right: calc(-1 * var(--frame-inset-x));
+	padding: 4px var(--frame-inset-x) 20px;
+	width: calc(100% + 2 * var(--frame-inset-x));
+	background: var(--page-surface);
+	box-shadow: 0 8px 0 var(--page-surface);
+}
+
+.stepRow {
+	display: grid;
+	grid-template-columns: 1fr 1fr auto;
+	align-items: stretch;
+	gap: 14px;
+	width: 100%;
+}
+
+.stepRow:has(.stepArrow) {
+	grid-template-columns: 1fr auto 1fr auto;
 	gap: 12px;
 }
 
-.uploadControlOffset {
-	margin-top: 104px;
+.stepBox {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 10px;
+	min-width: 0;
+	padding: 16px;
+	border-radius: 12px;
+	border: 3px solid #1e40af;
+	background: rgba(50, 20, 20, 0.28);
+	box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.stepHint {
+	margin: 0;
+	font-size: 0.85rem;
+	line-height: 1.45;
+	color: #fff7ed;
+	text-align: left;
+	text-shadow: 0 1px 1px rgba(40, 15, 15, 0.35);
+}
+
+.stepArrow {
+	align-self: start;
+	margin-top: calc(16px + var(--upload-button-height) / 2 - 0.55em);
+	font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+	font-size: clamp(1.75rem, 4vw, 2.25rem);
+	font-weight: 900;
+	line-height: 1;
+	color: #ffe500;
+	-webkit-text-stroke: 2px #1e40af;
+	text-shadow: 2px 2px 0 #1e3a8a, 0 3px 0 #172554;
+	user-select: none;
 }
 
 .uploadButton {
 	display: flex;
-	height: 48px;
-	width: 200px;
+	height: var(--upload-button-height);
+	width: 100%;
 	align-items: center;
 	justify-content: center;
-	gap: 8px;
 	border-radius: 9999px;
-	border: 0;
-	background: linear-gradient(135deg, #18181b, #3f3f46);
-	color: #fff;
-	font-weight: 600;
-	transition: transform 0.2s ease, box-shadow 0.2s ease,
-		background-color 0.2s ease;
-	padding: 0 20px;
-	box-shadow: 0 7px 14px rgba(24, 24, 27, 0.18);
+	border: 2px solid #1e40af;
+	background: linear-gradient(180deg, #fde047 0%, #facc15 55%, #eab308 100%);
+	color: #1e3a8a;
+	font-family: inherit;
+	font-weight: 800;
+	font-size: 0.9rem;
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+	padding: 0 16px;
+	box-shadow: 0 3px 0 #1e3a8a, 0 5px 14px rgba(0, 0, 0, 0.25);
 	cursor: pointer;
 }
 
-.uploadButton:hover {
-	transform: translateY(-1px);
-	background: linear-gradient(135deg, #27272a, #52525b);
+.uploadButton:hover:not(:disabled) {
+	transform: translateY(-2px);
+	box-shadow: 0 6px 0 #1e3a8a, 0 10px 20px rgba(0, 0, 0, 0.3);
 }
 
-.secondaryButton {
-	display: flex;
-	height: 48px;
-	width: 200px;
-	align-items: center;
-	justify-content: center;
-	border-radius: 9999px;
-	border: 1px solid rgba(24, 24, 27, 0.12);
+.uploadButton:active:not(:disabled) {
+	transform: translateY(2px);
+	box-shadow: 0 2px 0 #1e3a8a;
+}
+
+.uploadButton:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.stepBoxReset {
+	border: none;
 	background: transparent;
-	padding: 0 20px;
-	color: #18181b;
-	font-weight: 600;
-	cursor: pointer;
-	transition: border-color 0.2s ease, background-color 0.2s ease,
-		transform 0.2s ease;
+	box-shadow: none;
+	padding: 16px 0 0;
 }
 
-.secondaryButton:hover {
-	transform: translateY(-1px);
-	border-color: rgba(24, 24, 27, 0.35);
-	background: rgba(24, 24, 27, 0.04);
+.resetAside {
+	width: auto;
+	min-width: 100px;
+	padding: 0 18px;
 }
 
-.uploadStatus {
-	font-size: 0.95rem;
-	line-height: 1.5;
-	color: #000000;
+.statusPanel {
+	position: relative;
+	z-index: 10;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 14px 18px;
+	border-radius: 12px;
+	border: 3px solid #1e40af;
+	background: rgba(30, 15, 15, 0.94);
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35),
+		inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .progressBar {
-	width: min(100%, 420px);
-	height: 12px;
+	width: 100%;
+	height: 16px;
 	overflow: hidden;
 	border-radius: 9999px;
-	background: rgba(148, 163, 184, 0.22);
-	border: 1px solid rgba(148, 163, 184, 0.25);
-	box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
-	margin-bottom: 12px;
+	background: rgba(15, 23, 42, 0.85);
+	border: 2px solid #60a5fa;
+	box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.35);
 }
 
 .progressFill {
@@ -199,82 +277,376 @@
 }
 
 .progressFillError {
-	background: linear-gradient(90deg, #dc2626, #fb7185);
+	background: linear-gradient(90deg, #991b1b, #fca5a5);
 }
 
-.uploadHint {
-	font-size: 0.88rem;
-	line-height: 1.6;
-	color: #000000;
-}
-
-.uploadActions {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 12px;
-}
-
-@media (min-width: 768px) {
-	.uploadButton {
-		width: 200px;
-	}
-}
-
-@media (max-width: 960px) {
-	.frame {
-		grid-template-columns: 1fr;
-	}
-
-	.brandPanel {
-		border-right: 0;
-		border-bottom: 1px solid rgba(24, 24, 27, 0.08);
-	}
-
-	.contentPanel {
-		padding-top: 32px;
-	}
-
-	.uploadControlOffset {
-		margin-top: 0;
-	}
-}
-
-@media (max-width: 640px) {
-	.pageShell {
-		padding: 16px;
-	}
-
-	.brandPanel,
-	.contentPanel {
-		padding: 28px 22px;
-	}
-
-	.artPanel {
-		min-height: 260px;
-	}
-
-	.uploadButton,
-	.secondaryButton {
-		width: 100%;
-	}
-}
-
-.requestResult {
-	width: 500px;
-	margin-top: 16px;
-	padding: 16px;
-	border-radius: 12px;
-	background: rgba(175, 226, 183, 0.08);
-	border: 1px solid rgba(220, 38, 38, 0.12);
-	color: black;
-	font-size: 0.95rem;
+.progressStatus {
+	margin: 0;
+	width: 100%;
+	font-size: 1rem;
+	font-weight: 600;
 	line-height: 1.5;
+	color: #ffffff;
+	text-align: left;
+	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
-.successText {
-	color: #16a34a;
+.revealArena > * {
+	pointer-events: auto;
+}
+
+.revealCat {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	overflow: visible;
+	position: relative;
+	z-index: 10;
+	min-height: min(420px, 52vh);
+}
+
+/*
+ * Burst in the cat column, centered behind the cat; fade is on the image itself.
+ */
+.revealBurstClip {
+	position: absolute;
+	left: calc(
+		-1 * var(--frame-inset-x) - var(--reveal-burst-bleed-left)
+	);
+	width: calc(
+		var(--reveal-col-left-width) + 8px + var(--frame-inset-x) +
+			var(--reveal-burst-bleed-left)
+	);
+	top: 0;
+	bottom: 0;
+	z-index: 4;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	overflow: visible;
+	pointer-events: none;
+}
+
+.revealBackdropImg {
+	display: block;
+	width: auto;
+	height: min(520px, 62vh);
+	max-width: min(115%, 620px);
+	object-fit: contain;
+	object-position: center bottom;
+	transform: scale(var(--reveal-burst-scale))
+		translateX(var(--reveal-burst-offset-x));
+	transform-origin: center bottom;
+	-webkit-mask-image: linear-gradient(
+		to right,
+		#000 0%,
+		#000 calc(100% - var(--reveal-burst-image-fade)),
+		transparent 100%
+	);
+	mask-image: linear-gradient(
+		to right,
+		#000 0%,
+		#000 calc(100% - var(--reveal-burst-image-fade)),
+		transparent 100%
+	);
+}
+
+.catStage {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: min(420px, 52vw);
+	height: min(420px, 52vw);
+	overflow: visible;
+	z-index: 1;
+}
+
+.catImageWrap {
+	position: relative;
+	top: 5%;
+	right: 20%;
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 86%;
+	height: 86%;
+}
+
+.catImage {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	transform: scale(var(--cat-image-scale, 1))
+		translateX(var(--cat-image-offset-x, 0));
+	transform-origin: center center;
+	filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+}
+
+/* Soft red wash over the transition zone + breed column (no hard vertical line). */
+.revealGuessPanel {
+	position: absolute;
+	left: 0;
+	right: calc(-1 * var(--frame-inset-x));
+	top: 0;
+	bottom: 0;
+	z-index: 5;
+	pointer-events: none;
+	background: linear-gradient(
+		90deg,
+		transparent 0%,
+		transparent 48%,
+		rgba(254, 30, 3, 0.45) 56%,
+		var(--page-red) 68%
+	);
+}
+
+.revealArena {
+	display: grid;
+	grid-template-columns: 1.15fr 0.85fr;
+	align-items: center;
+	gap: 16px 28px;
+	width: 100%;
+	margin-top: 4px;
+	padding: 12px 8px 16px;
+	overflow: visible;
+	position: relative;
+	z-index: 10;
+	pointer-events: none;
+}
+
+.revealGuessColumn {
+	grid-column: 2;
+	position: relative;
+	align-self: stretch;
+	display: flex;
+	justify-content: center;
+	min-height: 100%;
+}
+
+.revealGuess {
+	--result-stack-max-width: min(100%, 440px);
+	--result-label-size: clamp(1rem, 2.8vw, 1.4rem);
+	--result-title-size: clamp(1.75rem, 5vw, 2.75rem);
+	--result-body-size: clamp(1.2rem, 3.5vw, 1.75rem);
+	--result-emoji-size: clamp(5rem, 14vw, 8.5rem);
+	position: relative;
+	z-index: 10;
+	pointer-events: auto;
+	margin-top: 24px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	min-height: 220px;
+	width: 100%;
+}
+
+.questionMark {
+	font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+	font-size: clamp(5rem, 14vw, 8.5rem);
+	font-weight: 900;
+	line-height: 1;
+	color: #ffe500;
+	-webkit-text-stroke: 3px #1e40af;
+	text-shadow: 3px 3px 0 #1e3a8a, 0 4px 0 #172554;
+}
+
+.guessLabel {
+	font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+	font-size: clamp(1.25rem, 3.5vw, 1.75rem);
+	font-weight: 700;
+	color: #fde047;
+	-webkit-text-stroke: 2px #1e40af;
+	text-transform: lowercase;
+	letter-spacing: 0.04em;
+}
+
+.breedRevealStack {
+	position: relative;
+	z-index: 10;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 14px;
+	max-width: var(--result-stack-max-width);
+	width: 100%;
+}
+
+.breedRevealCard {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 10px;
+	padding: 24px 32px;
+	border-radius: 16px;
+	background: linear-gradient(
+		180deg,
+		rgba(30, 58, 138, 0.95) 0%,
+		rgba(30, 64, 175, 0.92) 100%
+	);
+	border: 4px solid #93c5fd;
+	box-shadow: 0 0 32px rgba(59, 130, 246, 0.45),
+		inset 0 1px 0 rgba(255, 255, 255, 0.12);
+	width: 100%;
+}
+
+.breedIdLabel,
+.breedRevealName,
+.confidenceText {
+	font-family: inherit;
+	font-weight: 800;
+}
+
+.breedIdLabel {
+	margin: 0;
+	font-size: var(--result-label-size);
+	color: #bfdbfe;
+}
+
+.breedRevealName {
+	margin: 0;
+	text-align: center;
+	font-size: var(--result-title-size);
+	line-height: 1.3;
+	color: #fffbeb;
+	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+	word-break: break-word;
+}
+
+.confidenceText {
+	margin: 0;
+	font-size: var(--result-body-size);
+	color: #bfdbfe;
+	text-align: center;
+	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.noBreedStack {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 14px;
+	max-width: var(--result-stack-max-width);
+	width: 100%;
+}
+
+.noBreedText {
+	margin: 0;
+	text-align: center;
+	padding: 24px 32px;
+	font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+	font-size: var(--result-title-size);
+	font-weight: 900;
+	line-height: 1.2;
+	color: #fef08c;
+	background: linear-gradient(
+		180deg,
+		rgba(30, 58, 138, 0.95) 0%,
+		rgba(30, 64, 175, 0.9) 100%
+	);
+	border: 4px solid #93c5fd;
+	border-radius: 16px;
+	box-shadow: 0 0 32px rgba(59, 130, 246, 0.45),
+		inset 0 1px 0 rgba(255, 255, 255, 0.12);
+	width: 100%;
+}
+
+.noBreedEmoji {
+	font-size: var(--result-emoji-size);
+	line-height: 1;
+	color: #ffe500;
+	filter: drop-shadow(3px 3px 0 #1e3a8a) drop-shadow(0 4px 0 #172554)
+		drop-shadow(0 0 16px rgba(254, 229, 0, 0.35));
+}
+
+.confidencePanel {
+	width: 100%;
+	padding: 18px 28px;
+	border-radius: 14px;
+	border: 3px solid #93c5fd;
+	background: rgba(15, 23, 42, 0.96);
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3),
+		inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .errorText {
-	color: #dc2626;
+	margin: 0;
+	width: 100%;
+	font-weight: 600;
+	color: #fecaca;
+	text-align: left;
+	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+@media (max-width: 720px) {
+	.stepRow:has(.stepArrow) {
+		grid-template-columns: 1fr auto 1fr;
+	}
+
+	.stepRow:not(:has(.stepArrow)) {
+		grid-template-columns: 1fr 1fr;
+	}
+
+	.stepBox {
+		min-width: 140px;
+	}
+
+	.stepArrow {
+		margin-top: calc(12px + var(--upload-button-height) / 2 - 0.55em);
+	}
+
+	.stepBoxReset {
+		grid-column: 1 / -1;
+		align-items: center;
+	}
+
+	.stepBoxReset .resetAside {
+		width: 100%;
+		max-width: 200px;
+	}
+
+	.revealArena {
+		grid-template-columns: 1fr;
+		grid-template-rows: auto auto;
+	}
+
+	.revealGuessColumn {
+		grid-column: 1;
+	}
+
+	.catStage {
+		width: min(300px, 72vw);
+		height: min(300px, 72vw);
+	}
+
+	.revealGuess {
+		min-height: 200px;
+	}
+}
+
+@media (max-width: 520px) {
+	.wordArtLine {
+		white-space: normal;
+	}
+
+	.frame {
+		--frame-inset-x: 14px;
+		--frame-inset-bottom: 28px;
+		padding: 22px var(--frame-inset-x) var(--frame-inset-bottom);
+	}
+
+	.stepRow:has(.stepArrow),
+	.stepRow:not(:has(.stepArrow)) {
+		grid-template-columns: 1fr;
+	}
+
+	.stepArrow {
+		justify-self: center;
+		margin-top: 0;
+		margin-bottom: -4px;
+		transform: rotate(90deg);
+	}
 }

@@ -64,6 +64,20 @@ npm run dev
 
 Then open `http://localhost:3000`.
 
+### GitHub Pages (static export)
+
+The UI is built as a static export (`output: "export"` in `next.config.ts`) and deployed with [`.github/workflows/pages.yml`](.github/workflows/pages.yml) on pushes to `main`.
+
+1. In the repo **Settings → Pages**, set **Build and deployment** source to **GitHub Actions**.
+2. Under **Settings → Secrets and variables → Actions → Variables**, add **`NEXT_PUBLIC_API_BASE_URL`** with your deployed API stage URL (for example `https://xxxxxxxx.execute-api.us-east-1.amazonaws.com/prod`).
+3. Redeploy the API with your Pages origin in CORS (the browser sends only scheme + host, no path):
+
+   ```powershell
+   sam deploy --parameter-overrides CorsAllowedOrigins="http://localhost:3000,https://your-user.github.io"
+   ```
+
+The site is published at `https://your-user.github.io/meowlin/` (base path matches the repository name).
+
 ## Data retention
 
 Uploaded audio files under the `uploads/` prefix in the raw audio bucket are **automatically deleted after 7 days** via S3 lifecycle rules (see `UploadObjectExpirationDays` in `template.yaml`). Incomplete multipart uploads under that prefix are aborted after 1 day. DynamoDB clip metadata is not removed by this rule.
@@ -73,6 +87,12 @@ Uploaded audio files under the `uploads/` prefix in the raw audio bucket are **a
 Presigned uploads are capped at **10 MiB** by default (`MaxUploadSizeBytes` in `template.yaml`; the UI describes this as 10 MB). The API accepts common audio `Content-Type` values (and any `audio/*` type) and signs the PUT for the exact `fileSize` reported by the client.
 
 `POST /uploads` is throttled at the API Gateway stage (10 requests/s steady, 20 burst by default) and rate-limited per IP with AWS WAF (100 requests per 5-minute window minimum). Tune via `ApiUploadThrottle*` and `WafUploadsRateLimitPerIp` in `template.yaml`.
+
+Cross-origin access is controlled by `CorsAllowedOrigins` in `template.yaml` (defaults include local dev). When hosting the UI on GitHub Pages, see [GitHub Pages (static export)](#github-pages-static-export) and redeploy with your Pages origin included, for example:
+
+```powershell
+sam deploy --parameter-overrides CorsAllowedOrigins="http://localhost:3000,https://your-user.github.io"
+```
 
 # Caveats
 

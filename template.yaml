@@ -48,6 +48,12 @@ Parameters:
     MaxValue: 20000000
     Description: >
       Per-IP cap on POST /uploads in a 5-minute window (AWS WAF minimum is 100).
+  CorsAllowedOrigins:
+    Type: CommaDelimitedList
+    Default: "http://localhost:3000,http://127.0.0.1:3000"
+    Description: >
+      Browser origins allowed for API Gateway, Lambda CORS headers, and S3 presigned PUT
+      (e.g. add https://your-user.github.io for GitHub Pages).
 
 Globals:
   Function:
@@ -64,8 +70,10 @@ Resources:
     Properties:
       StageName: prod
       OpenApiVersion: "3.0.1"
+      # OPTIONS preflight uses * so multiple deploy-time origins work; Lambdas echo an
+      # allowed Origin on responses when it matches CorsAllowedOrigins.
       Cors:
-        AllowOrigin: "'http://localhost:3000'"
+        AllowOrigin: "'*'"
         AllowMethods: "'OPTIONS,POST,GET'"
         AllowHeaders: "'Content-Type'"
       MethodSettings:
@@ -143,6 +151,7 @@ Resources:
           CLIPS_TABLE_NAME: MeowlinClips
           RAW_AUDIO_BUCKET_NAME: !Ref RawAudioBucket
           MAX_UPLOAD_BYTES: !Ref MaxUploadSizeBytes
+          CORS_ALLOWED_ORIGINS: !Join [",", !Ref CorsAllowedOrigins]
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref MeowlinClipsTable
@@ -176,6 +185,7 @@ Resources:
       Environment:
         Variables:
           CLIPS_TABLE_NAME: MeowlinClips
+          CORS_ALLOWED_ORIGINS: !Join [",", !Ref CorsAllowedOrigins]
       Policies:
         - DynamoDBReadPolicy:
             TableName: !Ref MeowlinClipsTable
@@ -266,8 +276,7 @@ Resources:
               DaysAfterInitiation: 1
       CorsConfiguration:
         CorsRules:
-          - AllowedOrigins:
-              - http://localhost:3000
+          - AllowedOrigins: !Ref CorsAllowedOrigins
             AllowedMethods:
               - PUT
               - GET

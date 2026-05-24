@@ -4,10 +4,11 @@ import Image from "next/image"
 import { useSyncExternalStore } from "react"
 
 import revealBackground from "@/images/reveal_background.webp"
+import { withBasePath } from "@/lib/config"
 import styles from "./page.module.css"
 
-const REVEAL_VIDEO_WEBM = "/videos/reveal-background.webm"
-const REVEAL_VIDEO_MP4 = "/videos/reveal-background.mp4"
+const REVEAL_VIDEO_WEBM = withBasePath("/videos/reveal-background.webm")
+const REVEAL_VIDEO_MP4 = withBasePath("/videos/reveal-background.mp4")
 
 function subscribeReducedMotion(onStoreChange: () => void) {
 	const mq = window.matchMedia("(prefers-reduced-motion: reduce)")

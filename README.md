@@ -27,7 +27,7 @@ The live demo is hosted on GitHub Pages at:
 | **Serverless Application Model (SAM)** | Infrastructure management                                               |
 | **API Gateway**                        | REST API                                                                |
 | **Lambda**                             | Serverless functions (Node.js 22.x for API, Python 3.12 for Processing) |
-| **S3**                                 | Raw audio storage (uploads expire after 7 days)                         |
+| **S3**                                 | Raw audio storage (uploads expire after 3 days by default)              |
 | **DynamoDB**                           | Persistentence of metadata and results                                  |
 | **SQS**                                | Messaging to support asynchronous processing                            |
 
@@ -111,13 +111,25 @@ The site is published at `https://your-user.github.io/meowlin/` (base path match
 
 ## Data retention
 
-Uploaded audio files under the `uploads/` prefix in the raw audio bucket are **automatically deleted after 7 days** via S3 lifecycle rules (see `UploadObjectExpirationDays` in `template.yaml`). Incomplete multipart uploads under that prefix are aborted after 1 day. DynamoDB clip metadata is not removed by this rule.
+Uploaded audio files under the `uploads/` prefix in the raw audio bucket are **automatically deleted after 3 days** by default via S3 lifecycle rules (see `UploadObjectExpirationDays` in `template.yaml`). Incomplete multipart uploads under that prefix are aborted after 1 day. DynamoDB clip metadata is not removed by this rule.
 
 ## Upload limits
 
 Presigned uploads are capped at **10 MiB** by default (`MaxUploadSizeBytes` in `template.yaml`; the UI describes this as 10 MB). The API accepts common audio `Content-Type` values (and any `audio/*` type) and signs the PUT for the exact `fileSize` reported by the client.
 
-`POST /uploads` is throttled at the API Gateway stage (10 requests/s steady, 20 burst by default) and rate-limited per IP with AWS WAF (100 requests per 5-minute window minimum). Tune via `ApiUploadThrottle*` and `WafUploadsRateLimitPerIp` in `template.yaml`.
+`POST /uploads` is throttled at the API Gateway stage (10 requests/s steady, 20 burst by default) and rate-limited per IP with AWS WAF (100 requests per 5-minute window minimum; AWS WAF cannot go lower). `GET /clips/*` polling is also WAF rate-limited per IP (300 requests per 5-minute window by default). Tune via `ApiUploadThrottle*`, `WafUploadsRateLimitPerIp`, and `WafClipsRateLimitPerIp` in `template.yaml`.
+
+## Monitoring and cost alerts
+
+`sam deploy` creates CloudWatch alarms (API 4xx/5xx, WAF blocked requests, Lambda errors per function, S3 object count on the raw audio bucket). Alarms appear in the CloudWatch console even without email.
+
+To receive email when an alarm fires and when monthly spend crosses 80% of budget, set `AlarmNotificationEmail` (and optionally `MonthlyBudgetLimitUsd`) on deploy:
+
+```powershell
+sam deploy --parameter-overrides AlarmNotificationEmail="you@example.com"
+```
+
+After deploy, **confirm the SNS subscription** in the inbox AWS sends. Without `AlarmNotificationEmail`, alarms have no SNS action (console only).
 
 Cross-origin access is controlled by `CorsAllowedOrigins` in `template.yaml` (defaults include local dev). When hosting the UI on GitHub Pages, see [GitHub Pages (static export)](#github-pages-static-export) and redeploy with your Pages origin included, for example:
 

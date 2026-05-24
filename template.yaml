@@ -11,7 +11,7 @@ Parameters:
       policy SourceArn without depending on the bucket resource (avoids create ordering cycles).
   UploadObjectExpirationDays:
     Type: Number
-    Default: 7
+    Default: 3
     MinValue: 1
     MaxValue: 90
     Description: Delete objects under uploads/ after this many days (applies to all uploads).
@@ -48,6 +48,50 @@ Parameters:
     MaxValue: 20000000
     Description: >
       Per-IP cap on POST /uploads in a 5-minute window (AWS WAF minimum is 100).
+  WafClipsRateLimitPerIp:
+    Type: Number
+    Default: 300
+    MinValue: 100
+    MaxValue: 20000000
+    Description: >
+      Per-IP cap on GET /clips/* in a 5-minute window (covers poll traffic; AWS WAF minimum is 100).
+  AlarmNotificationEmail:
+    Type: String
+    Default: ""
+    Description: >
+      Optional email for SNS alarm notifications and monthly budget alerts. Leave empty to
+      create alarms without notifications (visible in CloudWatch only). Confirm the SNS
+      subscription after deploy.
+  AlarmApi5xxThreshold:
+    Type: Number
+    Default: 5
+    MinValue: 1
+    Description: Alarm when prod API 5xx count exceeds this in one 5-minute period.
+  AlarmApi4xxThreshold:
+    Type: Number
+    Default: 100
+    MinValue: 1
+    Description: Alarm when prod API 4xx count exceeds this in one 5-minute period.
+  AlarmWafBlockedThreshold:
+    Type: Number
+    Default: 25
+    MinValue: 1
+    Description: Alarm when WAF blocked requests exceed this in one 5-minute period.
+  AlarmLambdaErrorsThreshold:
+    Type: Number
+    Default: 3
+    MinValue: 1
+    Description: Alarm when a single Lambda function error count exceeds this in one 5-minute period.
+  AlarmS3ObjectCountThreshold:
+    Type: Number
+    Default: 2000
+    MinValue: 1
+    Description: Alarm when S3 NumberOfObjects for the raw audio bucket exceeds this (daily metric).
+  MonthlyBudgetLimitUsd:
+    Type: Number
+    Default: 25
+    MinValue: 1
+    Description: Monthly account cost budget (USD); 80% actual-spend alert when AlarmNotificationEmail is set.
   CorsAllowedOrigins:
     Type: CommaDelimitedList
     Default: "http://localhost:3000,http://127.0.0.1:3000"
@@ -63,11 +107,15 @@ Globals:
     Architectures:
       - arm64
 
+Conditions:
+  HasAlarmNotificationEmail: !Not [!Equals [!Ref AlarmNotificationEmail, ""]]
+
 Resources:
   # SAM manages the single prod stage and its deployment.
   MeowlinApi:
     Type: AWS::Serverless::Api
     Properties:
+      Name: meowlin-api
       StageName: prod
       OpenApiVersion: "3.0.1"
       # OPTIONS preflight uses * so multiple deploy-time origins work; Lambdas echo an
@@ -129,6 +177,37 @@ Resources:
             SampledRequestsEnabled: true
             CloudWatchMetricsEnabled: true
             MetricName: meowlin-uploads-rate-limit-per-ip
+        - Name: RateLimitGetClipsPerIp
+          Priority: 2
+          Action:
+            Block: {}
+          Statement:
+            RateBasedStatement:
+              Limit: !Ref WafClipsRateLimitPerIp
+              AggregateKeyType: IP
+              ScopeDownStatement:
+                AndStatement:
+                  Statements:
+                    - ByteMatchStatement:
+                        FieldToMatch:
+                          UriPath: {}
+                        PositionalConstraint: STARTS_WITH
+                        SearchString: /clips/
+                        TextTransformations:
+                          - Priority: 0
+                            Type: NONE
+                    - ByteMatchStatement:
+                        FieldToMatch:
+                          Method: {}
+                        PositionalConstraint: EXACTLY
+                        SearchString: GET
+                        TextTransformations:
+                          - Priority: 0
+                            Type: NONE
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: meowlin-clips-rate-limit-per-ip
 
   MeowlinApiWebAclAssociation:
     Type: AWS::WAFv2::WebACLAssociation
@@ -296,6 +375,198 @@ Resources:
                   - Name: prefix
                     Value: uploads/
 
+  MeowlinAlarmTopic:
+    Type: AWS::SNS::Topic
+    Condition: HasAlarmNotificationEmail
+    Properties:
+      TopicName: meowlin-alarms
+
+  MeowlinAlarmEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Condition: HasAlarmNotificationEmail
+    Properties:
+      TopicArn: !Ref MeowlinAlarmTopic
+      Protocol: email
+      Endpoint: !Ref AlarmNotificationEmail
+
+  MeowlinCostBudget:
+    Type: AWS::Budgets::Budget
+    Condition: HasAlarmNotificationEmail
+    Properties:
+      Budget:
+        BudgetName: meowlin-monthly-cost
+        BudgetLimit:
+          Amount: !Ref MonthlyBudgetLimitUsd
+          Unit: USD
+        TimeUnit: MONTHLY
+        BudgetType: COST
+      NotificationsWithSubscribers:
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: 80
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref AlarmNotificationEmail
+
+  Api5xxAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: meowlin-api-5xx
+      AlarmDescription: API Gateway prod stage 5xx errors
+      Namespace: AWS/ApiGateway
+      MetricName: 5XXError
+      Dimensions:
+        - Name: ApiName
+          Value: meowlin-api
+        - Name: Stage
+          Value: prod
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: !Ref AlarmApi5xxThreshold
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If
+        - HasAlarmNotificationEmail
+        - - !Ref MeowlinAlarmTopic
+        - !Ref AWS::NoValue
+
+  Api4xxAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: meowlin-api-4xx
+      AlarmDescription: API Gateway prod stage 4xx errors (throttling, WAF, client errors)
+      Namespace: AWS/ApiGateway
+      MetricName: 4XXError
+      Dimensions:
+        - Name: ApiName
+          Value: meowlin-api
+        - Name: Stage
+          Value: prod
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: !Ref AlarmApi4xxThreshold
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If
+        - HasAlarmNotificationEmail
+        - - !Ref MeowlinAlarmTopic
+        - !Ref AWS::NoValue
+
+  WafBlockedAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: meowlin-waf-blocked
+      AlarmDescription: WAF blocked requests on the API stage (rate limits)
+      Namespace: AWS/WAFV2
+      MetricName: BlockedRequests
+      Dimensions:
+        - Name: WebACL
+          Value: meowlin-api-uploads-rate-limit
+        - Name: Region
+          Value: !Ref AWS::Region
+        - Name: Rule
+          Value: ALL
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: !Ref AlarmWafBlockedThreshold
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If
+        - HasAlarmNotificationEmail
+        - - !Ref MeowlinAlarmTopic
+        - !Ref AWS::NoValue
+
+  RequestUploadUrlErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: meowlin-lambda-request-upload-url-errors
+      AlarmDescription: Errors in meowlin-request-upload-url
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: meowlin-request-upload-url
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: !Ref AlarmLambdaErrorsThreshold
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If
+        - HasAlarmNotificationEmail
+        - - !Ref MeowlinAlarmTopic
+        - !Ref AWS::NoValue
+
+  GetClipResultErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: meowlin-lambda-get-clip-result-errors
+      AlarmDescription: Errors in meowlin-get-clip-result
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: meowlin-get-clip-result
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: !Ref AlarmLambdaErrorsThreshold
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If
+        - HasAlarmNotificationEmail
+        - - !Ref MeowlinAlarmTopic
+        - !Ref AWS::NoValue
+
+  ProcessClipErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: meowlin-lambda-process-clip-errors
+      AlarmDescription: Errors in meowlin-process-clip
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: meowlin-process-clip
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: !Ref AlarmLambdaErrorsThreshold
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If
+        - HasAlarmNotificationEmail
+        - - !Ref MeowlinAlarmTopic
+        - !Ref AWS::NoValue
+
+  RawAudioBucketObjectCountAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: meowlin-s3-raw-audio-object-count
+      AlarmDescription: Raw audio bucket object count high (possible upload abuse)
+      Namespace: AWS/S3
+      MetricName: NumberOfObjects
+      Dimensions:
+        - Name: BucketName
+          Value: !Ref RawAudioBucketName
+        - Name: StorageType
+          Value: AllStorageTypes
+      Statistic: Maximum
+      Period: 86400
+      EvaluationPeriods: 1
+      Threshold: !Ref AlarmS3ObjectCountThreshold
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If
+        - HasAlarmNotificationEmail
+        - - !Ref MeowlinAlarmTopic
+        - !Ref AWS::NoValue
+
 Outputs:
   MeowlinApiUrl:
     Description: "API Gateway REST API base URL"
@@ -319,5 +590,9 @@ Outputs:
     Description: "SQS queue ARN for S3 upload processing events"
     Value: !GetAtt MeowlinClipProcessingQueue.Arn
   MeowlinApiWebAclArn:
-    Description: "Regional WAF Web ACL ARN for per-IP POST /uploads rate limiting"
+    Description: "Regional WAF Web ACL ARN for per-IP rate limiting on uploads and clip polling"
     Value: !GetAtt MeowlinApiWebAcl.Arn
+  MeowlinAlarmTopicArn:
+    Condition: HasAlarmNotificationEmail
+    Description: "SNS topic for CloudWatch alarms (confirm email subscription after deploy)"
+    Value: !Ref MeowlinAlarmTopic

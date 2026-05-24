@@ -168,7 +168,7 @@ uploadUrlExpiresInSeconds
 
 Use short-lived presigned URLs, such as 900 seconds.
 
-S3 lifecycle (see `template.yaml`): objects under `uploads/` expire after 7 days by default (`UploadObjectExpirationDays`). Incomplete multipart uploads under that prefix abort after 1 day.
+S3 lifecycle (see `template.yaml`): objects under `uploads/` expire after 3 days by default (`UploadObjectExpirationDays`). Incomplete multipart uploads under that prefix abort after 1 day.
 
 Upload limits (`POST /uploads`):
 
@@ -176,7 +176,8 @@ Upload limits (`POST /uploads`):
 - `fileSize` (bytes) is required and must match the bytes sent in the subsequent presigned `PUT`.
 - Default max size is 10 MiB (`MaxUploadSizeBytes` in `template.yaml`).
 - `fileName` sets the object extension in S3 (`uploads/{clipId}/{clientClipId}.{ext}`); any audio extension is allowed.
-- API Gateway throttling and a regional WAF per-IP rate limit apply to `POST /uploads` (see `template.yaml` parameters `ApiUploadThrottle*` and `WafUploadsRateLimitPerIp`).
+- API Gateway throttling and regional WAF per-IP rate limits apply to `POST /uploads` and `GET /clips/*` (see `template.yaml` parameters `ApiUploadThrottle*`, `WafUploadsRateLimitPerIp`, and `WafClipsRateLimitPerIp`).
+- CloudWatch alarms for API 4xx/5xx, WAF blocks, Lambda errors, and S3 object count are defined in `template.yaml`; optional email via `AlarmNotificationEmail`.
 - CORS allowlist: set `CorsAllowedOrigins` at deploy time (S3, API Lambdas). Include every UI origin (local + GitHub Pages).
 
 ## Repository Layout

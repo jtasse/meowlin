@@ -38,10 +38,23 @@
 	overflow: hidden;
 }
 
+.frameHeader {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 20px;
+	align-self: stretch;
+	width: 100%;
+	position: relative;
+	z-index: 25;
+}
+
 .wordArtTitle {
+	flex: 1 1 auto;
+	min-width: 0;
 	margin: 0;
 	padding: 0;
-	text-align: center;
+	text-align: left;
 	font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
 	font-weight: 900;
 	font-style: italic;
@@ -49,6 +62,164 @@
 	letter-spacing: 0.02em;
 	position: relative;
 	z-index: 2;
+}
+
+.frameNav {
+	flex-shrink: 0;
+	padding-top: 0.35em;
+}
+
+.aboutNavShell {
+	display: flex;
+	flex-flow: row wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px 20px;
+	padding: 10px 14px;
+	border-radius: var(--panel-radius);
+	background: var(--panel-bg);
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35),
+		inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.aboutDrawer {
+	position: relative;
+}
+
+.aboutDrawerTrigger {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: #fde047;
+	font-family: inherit;
+	font-size: 0.8rem;
+	font-weight: 700;
+	line-height: 1.3;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	text-align: right;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.aboutDrawerTrigger:hover {
+	color: #fef08a;
+}
+
+.aboutDrawerTrigger:focus-visible {
+	outline: 2px solid #60a5fa;
+	outline-offset: 3px;
+	border-radius: 4px;
+}
+
+.aboutDrawerChevron {
+	display: inline-block;
+	width: 0;
+	height: 0;
+	border-left: 5px solid transparent;
+	border-right: 5px solid transparent;
+	border-bottom: 6px solid currentColor;
+	transition: transform 0.25s ease;
+}
+
+.aboutDrawerOpen .aboutDrawerChevron {
+	transform: rotate(180deg);
+}
+
+.aboutDrawerPanel {
+	position: absolute;
+	top: 100%;
+	right: 0;
+	z-index: 40;
+	overflow: hidden;
+	padding-top: 10px;
+	transform-origin: top right;
+	max-width: 0;
+	max-height: 0;
+	opacity: 0;
+	pointer-events: none;
+	transition:
+		max-width 0.35s ease,
+		max-height 0.35s ease,
+		opacity 0.25s ease;
+}
+
+.aboutDrawerOpen .aboutDrawerPanel {
+	max-width: min(380px, calc(100vw - 48px));
+	max-height: min(420px, 70vh);
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.aboutDrawerPanelInner {
+	width: min(380px, calc(100vw - 48px));
+	padding: 14px 18px;
+	border-radius: var(--panel-radius);
+	background: var(--panel-bg);
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35),
+		inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.aboutDrawerText {
+	margin: 0;
+	font-size: 0.95rem;
+	line-height: 1.55;
+	color: #f8fafc;
+	text-align: left;
+}
+
+.aboutDrawerLink {
+	display: inline;
+	color: #93c5fd;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	white-space: nowrap;
+}
+
+.aboutDrawerLink:hover,
+.aboutDrawerLink:focus-visible {
+	color: #bfdbfe;
+}
+
+.aboutDrawerLinkLabel {
+	display: inline;
+}
+
+.aboutDrawerExternalIcon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 0;
+	height: 1em;
+	margin-left: 0;
+	overflow: hidden;
+	vertical-align: -0.15em;
+	opacity: 0;
+	transition:
+		width 0.15s ease,
+		margin-left 0.15s ease,
+		opacity 0.15s ease;
+}
+
+.aboutDrawerLink:hover .aboutDrawerExternalIcon,
+.aboutDrawerLink:focus-visible .aboutDrawerExternalIcon {
+	width: 1em;
+	margin-left: 0.2em;
+	opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.aboutDrawerPanel {
+		transition: none;
+	}
+
+	.aboutDrawerChevron {
+		transition: none;
+	}
 }
 
 .wordArtLine {
@@ -588,9 +759,30 @@
 	}
 }
 
+@media (max-width: 720px) {
+	.frameHeader {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 12px;
+	}
+
+	.frameNav {
+		padding-top: 0;
+	}
+
+	.aboutNavShell {
+		flex-direction: column;
+		align-items: flex-end;
+	}
+}
+
 @media (max-width: 520px) {
 	.wordArtLine {
 		white-space: normal;
+	}
+
+	.aboutDrawerPanelInner {
+		width: min(320px, calc(100vw - 40px));
 	}
 
 	.frame {

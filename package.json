@@ -13,7 +13,8 @@
         "unit": "jest",
         "test:api": "jest",
         "test:process-clip": "python -m pytest src/api/process-clip -q",
-        "test": "npm run test:api && npm run test:process-clip",
+        "test": "npm run test:api && npm run test:process-clip && npm run test:front-end",
+        "test:front-end": "npm --prefix src/front-end run test",
         "lint": "eslint '*.ts' --quiet --fix",
         "compile": "tsc"
     },

@@ -1,10 +1,8 @@
-import type { Metadata, Viewport } from "next";
+import type { Viewport } from "next";
 import "./globals.css";
+import { buildSiteMetadata } from "@/lib/siteMetadata";
 
-export const metadata: Metadata = {
-  title: "What's that cat breed? | Meowlin",
-  description: "Upload meow audio and identify the cat breed — Meowlin demo",
-};
+export const metadata = buildSiteMetadata();
 
 export const viewport: Viewport = {
   width: "device-width",

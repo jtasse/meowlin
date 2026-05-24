@@ -265,17 +265,27 @@ Recommended MVP controls:
 - Use short-lived presigned URLs, such as 900 seconds.
 - Validate request bodies early.
 - Keep CloudWatch log retention short later.
-- Add AWS Budgets alerts before sharing publicly.
+- CloudWatch alarms and optional SNS + monthly cost budget are defined in `template.yaml` (see README **Monitoring and cost alerts**).
 
 API throttling and rate limits (deployed):
 
 - **Stage defaults** (`ApiStageThrottleRateLimit` / `ApiStageThrottleBurstLimit`): 50 r/s steady, 100 burst for all routes.
 - **`POST /uploads`** (`ApiUploadThrottleRateLimit` / `ApiUploadThrottleBurstLimit`): 10 r/s steady, 20 burst (API Gateway returns `429`).
-- **Per-IP WAF** (`WafUploadsRateLimitPerIp`): 100 `POST /uploads` requests per IP per 5-minute window minimum (AWS WAF floor); returns `403` when exceeded. Regional Web ACL is associated with the `prod` stage.
+- **Per-IP WAF** (`WafUploadsRateLimitPerIp`): 100 `POST /uploads` requests per IP per 5-minute window minimum (AWS WAF floor); returns `403` when exceeded.
+- **Per-IP WAF** (`WafClipsRateLimitPerIp`): 300 `GET /clips/*` requests per IP per 5-minute window by default (poll traffic).
+- Regional Web ACL is associated with the `prod` stage.
+
+CloudWatch alarms (deployed via SAM):
+
+- API Gateway `4XXError` / `5XXError` on `meowlin-api` / `prod`
+- WAF `BlockedRequests` (Web ACL aggregate)
+- Lambda `Errors` for each function (`meowlin-request-upload-url`, `meowlin-get-clip-result`, `meowlin-process-clip`)
+- S3 `NumberOfObjects` on the raw audio bucket (daily; threshold `AlarmS3ObjectCountThreshold`)
+- Optional SNS email + monthly cost budget when `AlarmNotificationEmail` is set at deploy time
 
 S3 upload retention (deployed):
 
-- Objects under `uploads/` expire after **7 days** (`UploadObjectExpirationDays` in `template.yaml`, default 7).
+- Objects under `uploads/` expire after **3 days** by default (`UploadObjectExpirationDays` in `template.yaml`, default 3).
 - Incomplete multipart uploads under `uploads/` are aborted after **1 day**.
 - DynamoDB clip rows are not deleted by this lifecycle rule.
 

@@ -5,6 +5,11 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# checkout/configure-pages still run on Node 20 internally until their v5+ tags;
+# this opts those action runtimes into Node 24 (unrelated to setup-node below).
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 permissions:
   contents: read
   pages: write
@@ -17,22 +22,28 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Use the same environment as deploy so variables/secrets defined under
+    # Settings → Environments → github-pages are visible to the build job.
+    environment:
+      name: github-pages
+    env:
+      # Repository or github-pages environment variable/secret (no trailing slash).
+      NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL || secrets.NEXT_PUBLIC_API_BASE_URL }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/configure-pages@v4
+      - uses: actions/configure-pages@v5
         id: pages
 
       - name: Require API base URL
         run: |
           if [ -z "$NEXT_PUBLIC_API_BASE_URL" ]; then
-            echo "::error::Set repository variable NEXT_PUBLIC_API_BASE_URL to your API Gateway stage URL (e.g. https://xxx.execute-api.us-east-1.amazonaws.com/prod)."
+            echo "::error::Add NEXT_PUBLIC_API_BASE_URL (e.g. https://xxx.execute-api.us-east-1.amazonaws.com/prod) as a repository Actions variable/secret OR under Settings → Environments → github-pages."
             exit 1
           fi
-        env:
-          NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js for Next.js build
+        uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
@@ -41,7 +52,6 @@ jobs:
       - name: Install and build
         working-directory: src/front-end
         env:
-          NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
           NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
           NEXT_PUBLIC_PAGES_URL: https://${{ github.repository_owner }}.github.io${{ steps.pages.outputs.base_path }}
           NEXT_PUBLIC_APP_ENV: production
@@ -49,7 +59,7 @@ jobs:
           npm ci
           npm run build
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v4
         with:
           path: src/front-end/out
 

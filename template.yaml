@@ -9,6 +9,45 @@ Parameters:
     Description: >
       Globally unique S3 bucket name for raw uploads. Passed to the clip-processing queue
       policy SourceArn without depending on the bucket resource (avoids create ordering cycles).
+  UploadObjectExpirationDays:
+    Type: Number
+    Default: 7
+    MinValue: 1
+    MaxValue: 90
+    Description: Delete objects under uploads/ after this many days (applies to all uploads).
+  MaxUploadSizeBytes:
+    Type: Number
+    Default: 10485760
+    MinValue: 1
+    MaxValue: 52428800
+    Description: Maximum presigned upload size in bytes (default 10 MiB).
+  ApiStageThrottleRateLimit:
+    Type: Number
+    Default: 50
+    MinValue: 1
+    Description: Steady-state stage throttle (requests per second) for all routes.
+  ApiStageThrottleBurstLimit:
+    Type: Number
+    Default: 100
+    MinValue: 1
+    Description: Burst stage throttle (concurrent requests) for all routes.
+  ApiUploadThrottleRateLimit:
+    Type: Number
+    Default: 10
+    MinValue: 1
+    Description: Steady-state throttle (requests per second) for POST /uploads.
+  ApiUploadThrottleBurstLimit:
+    Type: Number
+    Default: 20
+    MinValue: 1
+    Description: Burst throttle (concurrent requests) for POST /uploads.
+  WafUploadsRateLimitPerIp:
+    Type: Number
+    Default: 100
+    MinValue: 100
+    MaxValue: 20000000
+    Description: >
+      Per-IP cap on POST /uploads in a 5-minute window (AWS WAF minimum is 100).
 
 Globals:
   Function:
@@ -29,6 +68,68 @@ Resources:
         AllowOrigin: "'http://localhost:3000'"
         AllowMethods: "'OPTIONS,POST,GET'"
         AllowHeaders: "'Content-Type'"
+      MethodSettings:
+        - ResourcePath: "/*"
+          HttpMethod: "*"
+          ThrottlingRateLimit: !Ref ApiStageThrottleRateLimit
+          ThrottlingBurstLimit: !Ref ApiStageThrottleBurstLimit
+        - ResourcePath: "/uploads"
+          HttpMethod: "POST"
+          ThrottlingRateLimit: !Ref ApiUploadThrottleRateLimit
+          ThrottlingBurstLimit: !Ref ApiUploadThrottleBurstLimit
+
+  MeowlinApiWebAcl:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      Name: meowlin-api-uploads-rate-limit
+      Scope: REGIONAL
+      DefaultAction:
+        Allow: {}
+      VisibilityConfig:
+        SampledRequestsEnabled: true
+        CloudWatchMetricsEnabled: true
+        MetricName: meowlin-api-web-acl
+      Rules:
+        - Name: RateLimitUploadsPerIp
+          Priority: 1
+          Action:
+            Block: {}
+          Statement:
+            RateBasedStatement:
+              Limit: !Ref WafUploadsRateLimitPerIp
+              AggregateKeyType: IP
+              ScopeDownStatement:
+                AndStatement:
+                  Statements:
+                    - ByteMatchStatement:
+                        FieldToMatch:
+                          UriPath: {}
+                        PositionalConstraint: STARTS_WITH
+                        SearchString: /uploads
+                        TextTransformations:
+                          - Priority: 0
+                            Type: NONE
+                    - ByteMatchStatement:
+                        FieldToMatch:
+                          Method: {}
+                        PositionalConstraint: EXACTLY
+                        SearchString: POST
+                        TextTransformations:
+                          - Priority: 0
+                            Type: NONE
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: meowlin-uploads-rate-limit-per-ip
+
+  MeowlinApiWebAclAssociation:
+    Type: AWS::WAFv2::WebACLAssociation
+    Properties:
+      ResourceArn: !Sub
+        - arn:${AWS::Partition}:apigateway:${AWS::Region}::/restapis/${RestApiId}/stages/${StageName}
+        - RestApiId: !Ref MeowlinApi
+          StageName: prod
+      WebACLArn: !GetAtt MeowlinApiWebAcl.Arn
 
   RequestUploadUrlFunction:
     Type: AWS::Serverless::Function
@@ -41,6 +142,7 @@ Resources:
           NODE_OPTIONS: "--v8-pool-size=1"
           CLIPS_TABLE_NAME: MeowlinClips
           RAW_AUDIO_BUCKET_NAME: !Ref RawAudioBucket
+          MAX_UPLOAD_BYTES: !Ref MaxUploadSizeBytes
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref MeowlinClipsTable
@@ -151,6 +253,17 @@ Resources:
       - MeowlinClipProcessingQueuePolicy
     Properties:
       BucketName: !Ref RawAudioBucketName
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireUploads
+            Status: Enabled
+            Prefix: uploads/
+            ExpirationInDays: !Ref UploadObjectExpirationDays
+          - Id: AbortIncompleteMultipartUploads
+            Status: Enabled
+            Prefix: uploads/
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
       CorsConfiguration:
         CorsRules:
           - AllowedOrigins:
@@ -173,8 +286,6 @@ Resources:
                 Rules:
                   - Name: prefix
                     Value: uploads/
-                  - Name: suffix
-                    Value: .mp3
 
 Outputs:
   MeowlinApiUrl:
@@ -198,3 +309,6 @@ Outputs:
   ClipProcessingQueueArn:
     Description: "SQS queue ARN for S3 upload processing events"
     Value: !GetAtt MeowlinClipProcessingQueue.Arn
+  MeowlinApiWebAclArn:
+    Description: "Regional WAF Web ACL ARN for per-IP POST /uploads rate limiting"
+    Value: !GetAtt MeowlinApiWebAcl.Arn

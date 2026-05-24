@@ -1,8 +1,8 @@
 # Meowlin
 
-Meowlin is a serverless AWS demo application inspired by the [Merlin](https://merlin.allaboutbirds.org/) bird identification app. Meowlin provides a cloud-native pipeline that ingests audio clips and \*_simulates_ processing them asynchronously to determine if any meows and corresponding cat breeds can be identified.
+Meowlin is a serverless AWS demo that simulates identifying cat breeds from uploaded meow audio. A React frontend talks to an API built with AWS SAM, API Gateway, Lambda, S3, SQS, and DynamoDB, which mock an asynchronous pipeline for ingesting clips and returning breed results.
 
-> **\*NOTE**: although Meowlin currently mocks the processing of audio clips, this simulated component _could_ be replaced with true machine learning + processing solution in the future.
+> **NOTE**: Audio processing is mocked today. The classifier step could be replaced with a real machine-learning pipeline later.
 
 ## Purpose
 
@@ -15,9 +15,13 @@ I have created this project for my portfolio in order to demonstrate AWS serverl
 | **Serverless Application Model (SAM)** | Infrastructure management                                               |
 | **API Gateway**                        | REST API                                                                |
 | **Lambda**                             | Serverless functions (Node.js 22.x for API, Python 3.12 for Processing) |
-| **S3**                                 | Raw audio storage                                                       |
+| **S3**                                 | Raw audio storage (uploads expire after 7 days)                         |
 | **DynamoDB**                           | Persistentence of metadata and results                                  |
 | **SQS**                                | Messaging to support asynchronous processing                            |
+
+## Inspiration
+
+The overall solution was inspired by the [Merlin](https://merlin.allaboutbirds.org/) bird identification app, though the front end takes its cues from the [Who's That Pokémon?](https://bulbapedia.bulbagarden.net/wiki/Who%27s_That_Pok%C3%A9mon%3F#) segment of [_Pokémon the Series_](https://bulbapedia.bulbagarden.net/wiki/Pok%C3%A9mon_the_Series).
 
 ## Prerequisites
 
@@ -60,6 +64,16 @@ npm run dev
 
 Then open `http://localhost:3000`.
 
+## Data retention
+
+Uploaded audio files under the `uploads/` prefix in the raw audio bucket are **automatically deleted after 7 days** via S3 lifecycle rules (see `UploadObjectExpirationDays` in `template.yaml`). Incomplete multipart uploads under that prefix are aborted after 1 day. DynamoDB clip metadata is not removed by this rule.
+
+## Upload limits
+
+Presigned uploads are capped at **10 MiB** by default (`MaxUploadSizeBytes` in `template.yaml`; the UI describes this as 10 MB). The API accepts common audio `Content-Type` values (and any `audio/*` type) and signs the PUT for the exact `fileSize` reported by the client.
+
+`POST /uploads` is throttled at the API Gateway stage (10 requests/s steady, 20 burst by default) and rate-limited per IP with AWS WAF (100 requests per 5-minute window minimum). Tune via `ApiUploadThrottle*` and `WafUploadsRateLimitPerIp` in `template.yaml`.
+
 # Caveats
 
 - Although the Merlin bird ID app performs audio processing in the client on the mobile device; for this demo I have shifted this work into AWS.
@@ -78,7 +92,7 @@ graph LR
     B --> C[Lambda: API]
     C -->|2. Create Metadata| D[(DynamoDB)]
     C -->|3. Return Presigned URL| A
-    A -->|4. Upload MP3| E{S3 Bucket}
+    A -->|4. Upload audio| E{S3 Bucket}
     E -->|5. Trigger Event| F[SQS Queue]
     F --> G[Lambda: Processor]
     G -->|6. Update Result| D

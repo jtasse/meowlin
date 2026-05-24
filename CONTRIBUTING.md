@@ -168,12 +168,15 @@ uploadUrlExpiresInSeconds
 
 Use short-lived presigned URLs, such as 900 seconds.
 
-For MVP, support only MP3:
+S3 lifecycle (see `template.yaml`): objects under `uploads/` expire after 7 days by default (`UploadObjectExpirationDays`). Incomplete multipart uploads under that prefix abort after 1 day.
 
-```text
-Content-Type: audio/mpeg
-fileName: {clientClipId}.mp3
-```
+Upload limits (`POST /uploads`):
+
+- `contentType` must be an allowed audio MIME type (explicit list plus any `audio/*` prefix).
+- `fileSize` (bytes) is required and must match the bytes sent in the subsequent presigned `PUT`.
+- Default max size is 10 MiB (`MaxUploadSizeBytes` in `template.yaml`).
+- `fileName` sets the object extension in S3 (`uploads/{clipId}/{clientClipId}.{ext}`); any audio extension is allowed.
+- API Gateway throttling and a regional WAF per-IP rate limit apply to `POST /uploads` (see `template.yaml` parameters `ApiUploadThrottle*` and `WafUploadsRateLimitPerIp`).
 
 ## Repository Layout
 
@@ -236,7 +239,7 @@ Only edit files that were originally created by Postman's Git Sync. Do not creat
 ### Recommended requests
 
 1. `POST /uploads`
-2. `PUT {{uploadUrl}}` with binary MP3 file
+2. `PUT {{uploadUrl}}` with binary audio file (size must match `fileSize` from step 1)
 3. Future: `GET /clips/{{clipId}}`
 
 In the `POST /uploads` Tests tab, capture values:
@@ -266,7 +269,7 @@ URL: {{uploadUrl}}
 Headers:
   Content-Type: audio/mpeg
 Body:
-  binary MP3 file
+  binary audio file
 ```
 
 Do not send JSON or form-data for the actual S3 upload.

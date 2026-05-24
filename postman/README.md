@@ -60,18 +60,20 @@ Runtime variables populated by scripts:
      ```json
      {
      	"clientClipId": "{{$timestamp}}",
-     	"contentType": "audio/mpeg"
+     	"fileName": "audio_with_meow_sample.mp3",
+     	"contentType": "audio/mpeg",
+     	"fileSize": 12345
      }
      ```
 
-   > **NOTE**: the `{{$timestamp}}` dynamic Postman variable is useful because it auto-increments the value for us
+   > **NOTE**: set `fileSize` to the exact byte length of the file you will `PUT` to S3. The `{{$timestamp}}` variable auto-increments `clientClipId`.
 
 2. **Upload Audio**
 
    - Method: `PUT`
    - URL: `{{uploadUrl}}`
-   - Header: `Content-Type: audio/mpeg`
-   - Body: binary `.mp3` file from your local machine
+   - Header: `Content-Type: audio/mpeg` (must match `POST /uploads`)
+   - Body: binary audio file from your local machine
    - Current sample file: `postman/audio_samples/audio_with_meow_sample.mp3`
 
 3. **Get Clip Result**

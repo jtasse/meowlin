@@ -62,6 +62,20 @@ Before running the commands below, ensure you have the following installed:
 4. **Test with Postman**:
    - Import the collection and environment from the `postman/` directory.
 
+## Tests
+
+Backend unit tests cover the API Lambdas and clip processor (mocked AWS clients; no live stack required):
+
+```powershell
+npm install
+npm test
+```
+
+- **Node (Jest):** `src/api/cors.test.js`, `request-upload-url/requestUploadUrl.test.js`, `get-clip-result/getClipResult.test.js`
+- **Python (pytest):** `src/api/process-clip/test_processClip.py` — install dev deps once with `pip install -r src/api/process-clip/requirements-dev.txt`
+
+Run subsets with `npm run test:api` or `npm run test:process-clip`.
+
 ## Frontend
 
 The Next.js frontend lives in `src/front-end`.

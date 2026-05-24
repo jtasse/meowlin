@@ -52,6 +52,9 @@ function extensionFromFileName(fileName) {
 	return ext || "audio"
 }
 
+module.exports.isAllowedContentType = isAllowedContentType
+module.exports.extensionFromFileName = extensionFromFileName
+
 exports.handler = async (event) => {
 	const corsHeaders = buildCorsHeaders(event)
 

@@ -285,6 +285,12 @@ Presigned upload limits (deployed):
 - `contentType` must be an allowed audio MIME type (explicit list plus `audio/*`).
 - `fileSize` is validated on `POST /uploads`; the client must send the same `Content-Type` on the presigned `PUT` as returned in the upload response.
 
+CORS (deployed):
+
+- `CorsAllowedOrigins` (`CommaDelimitedList` in `template.yaml`) configures S3 presigned `PUT`, Lambda response headers (`CORS_ALLOWED_ORIGINS`), and the default local origins (`http://localhost:3000`, `http://127.0.0.1:3000`).
+- Add your GitHub Pages origin (e.g. `https://your-user.github.io`) when deploying for a public demo.
+- API Gateway OPTIONS preflight uses `Allow-Origin: *`; Node Lambdas echo the request `Origin` only when it is on the allowlist (`src/api/cors.js`).
+
 Possible future public/demo controls:
 
 - Cognito authentication

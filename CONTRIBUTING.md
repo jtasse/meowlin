@@ -177,6 +177,7 @@ Upload limits (`POST /uploads`):
 - Default max size is 10 MiB (`MaxUploadSizeBytes` in `template.yaml`).
 - `fileName` sets the object extension in S3 (`uploads/{clipId}/{clientClipId}.{ext}`); any audio extension is allowed.
 - API Gateway throttling and a regional WAF per-IP rate limit apply to `POST /uploads` (see `template.yaml` parameters `ApiUploadThrottle*` and `WafUploadsRateLimitPerIp`).
+- CORS allowlist: set `CorsAllowedOrigins` at deploy time (S3, API Lambdas). Include every UI origin (local + GitHub Pages).
 
 ## Repository Layout
 

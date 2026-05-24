@@ -4,6 +4,7 @@ const { DynamoDBClient } = require("@aws-sdk/client-dynamodb")
 const { DynamoDBDocumentClient, PutCommand } = require("@aws-sdk/lib-dynamodb")
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3")
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner")
+const { buildCorsHeaders } = require("../cors")
 
 const REGION = process.env.AWS_REGION || "us-east-1"
 const dynamoClient = new DynamoDBClient({
@@ -18,10 +19,6 @@ const RAW_AUDIO_BUCKET_NAME = process.env.RAW_AUDIO_BUCKET_NAME
 const MAX_UPLOAD_BYTES = Number(process.env.MAX_UPLOAD_BYTES || 10 * 1024 * 1024)
 const UPLOAD_URL_EXPIRES_IN_SECONDS = 900 // 15 minutes
 const S3_KEY_PREFIX = "uploads"
-const CORS_HEADERS = {
-	"Content-Type": "application/json",
-	"Access-Control-Allow-Origin": "http://localhost:3000",
-}
 
 /** MIME types commonly used for browser audio uploads (also allows any other audio/*). */
 const ALLOWED_AUDIO_CONTENT_TYPES = new Set([
@@ -56,6 +53,8 @@ function extensionFromFileName(fileName) {
 }
 
 exports.handler = async (event) => {
+	const corsHeaders = buildCorsHeaders(event)
+
 	console.log(
 		"Request received",
 		JSON.stringify({
@@ -76,7 +75,7 @@ exports.handler = async (event) => {
 		)
 		return {
 			statusCode: 500,
-			headers: CORS_HEADERS,
+			headers: corsHeaders,
 			body: JSON.stringify({
 				message: "Server configuration error.",
 			}),
@@ -86,7 +85,7 @@ exports.handler = async (event) => {
 	if (!event.body) {
 		return {
 			statusCode: 400,
-			headers: CORS_HEADERS,
+			headers: corsHeaders,
 			body: JSON.stringify({ message: "Request body is missing." }),
 		}
 	}
@@ -97,7 +96,7 @@ exports.handler = async (event) => {
 	} catch (error) {
 		return {
 			statusCode: 400,
-			headers: CORS_HEADERS,
+			headers: corsHeaders,
 			body: JSON.stringify({ message: "Invalid JSON in request body." }),
 		}
 	}
@@ -107,7 +106,7 @@ exports.handler = async (event) => {
 	if (!clientClipId) {
 		return {
 			statusCode: 400,
-			headers: CORS_HEADERS,
+			headers: corsHeaders,
 			body: JSON.stringify({ message: "clientClipId is required." }),
 		}
 	}
@@ -115,7 +114,7 @@ exports.handler = async (event) => {
 	if (!fileName) {
 		return {
 			statusCode: 400,
-			headers: CORS_HEADERS,
+			headers: corsHeaders,
 			body: JSON.stringify({ message: "fileName is required." }),
 		}
 	}
@@ -123,7 +122,7 @@ exports.handler = async (event) => {
 	if (!contentType) {
 		return {
 			statusCode: 400,
-			headers: CORS_HEADERS,
+			headers: corsHeaders,
 			body: JSON.stringify({ message: "contentType is required." }),
 		}
 	}
@@ -131,7 +130,7 @@ exports.handler = async (event) => {
 	if (!isAllowedContentType(contentType)) {
 		return {
 			statusCode: 400,
-			headers: CORS_HEADERS,
+			headers: corsHeaders,
 			body: JSON.stringify({
 				message: "contentType must be an allowed audio type.",
 			}),
@@ -146,7 +145,7 @@ exports.handler = async (event) => {
 	) {
 		return {
 			statusCode: 400,
-			headers: CORS_HEADERS,
+			headers: corsHeaders,
 			body: JSON.stringify({
 				message: "fileSize must be a positive integer (bytes).",
 			}),
@@ -156,7 +155,7 @@ exports.handler = async (event) => {
 	if (parsedFileSize > MAX_UPLOAD_BYTES) {
 		return {
 			statusCode: 413,
-			headers: CORS_HEADERS,
+			headers: corsHeaders,
 			body: JSON.stringify({
 				message: `File size exceeds maximum of ${MAX_UPLOAD_BYTES} bytes.`,
 				maxUploadBytes: MAX_UPLOAD_BYTES,
@@ -202,7 +201,7 @@ exports.handler = async (event) => {
 
 		return {
 			statusCode: 200,
-			headers: CORS_HEADERS,
+			headers: corsHeaders,
 			body: JSON.stringify({
 				clipId,
 				clientClipId,
@@ -226,7 +225,7 @@ exports.handler = async (event) => {
 		if (error.name === "ConditionalCheckFailedException") {
 			return {
 				statusCode: 409, // Conflict
-				headers: CORS_HEADERS,
+				headers: corsHeaders,
 				body: JSON.stringify({
 					message: `Clip with ID ${clipId} already exists.`,
 				}),
@@ -234,7 +233,7 @@ exports.handler = async (event) => {
 		}
 		return {
 			statusCode: 500,
-			headers: CORS_HEADERS,
+			headers: corsHeaders,
 			body: JSON.stringify({
 				message: "Failed to process upload request.",
 				error: error.message,

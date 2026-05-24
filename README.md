@@ -74,6 +74,12 @@ Presigned uploads are capped at **10 MiB** by default (`MaxUploadSizeBytes` in `
 
 `POST /uploads` is throttled at the API Gateway stage (10 requests/s steady, 20 burst by default) and rate-limited per IP with AWS WAF (100 requests per 5-minute window minimum). Tune via `ApiUploadThrottle*` and `WafUploadsRateLimitPerIp` in `template.yaml`.
 
+Cross-origin access is controlled by `CorsAllowedOrigins` in `template.yaml` (defaults include local dev). When hosting the UI on GitHub Pages, redeploy with your Pages origin included, for example:
+
+```powershell
+sam deploy --parameter-overrides CorsAllowedOrigins="http://localhost:3000,https://your-user.github.io"
+```
+
 # Caveats
 
 - Although the Merlin bird ID app performs audio processing in the client on the mobile device; for this demo I have shifted this work into AWS.

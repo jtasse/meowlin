@@ -1,5 +1,6 @@
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb")
 const { DynamoDBDocumentClient, GetCommand } = require("@aws-sdk/lib-dynamodb")
+const { buildCorsHeaders } = require("../cors")
 
 const REGION = process.env.AWS_REGION || "us-east-1"
 const CLIPS_TABLE_NAME = process.env.CLIPS_TABLE_NAME
@@ -9,12 +10,10 @@ const dynamoClient = new DynamoDBClient({
 	maxAttempts: 1,
 })
 const docClient = DynamoDBDocumentClient.from(dynamoClient)
-const CORS_HEADERS = {
-	"Content-Type": "application/json",
-	"Access-Control-Allow-Origin": "http://localhost:3000",
-}
 
 exports.handler = async (event) => {
+	const corsHeaders = buildCorsHeaders(event)
+
 	console.log(
 		"Request received",
 		JSON.stringify({
@@ -29,7 +28,7 @@ exports.handler = async (event) => {
 		console.error("Missing CLIPS_TABLE_NAME environment variable")
 		return {
 			statusCode: 500,
-			headers: CORS_HEADERS,
+			headers: corsHeaders,
 			body: JSON.stringify({ message: "Server configuration error." }),
 		}
 	}
@@ -39,7 +38,7 @@ exports.handler = async (event) => {
 	if (!clipId) {
 		return {
 			statusCode: 400,
-			headers: CORS_HEADERS,
+			headers: corsHeaders,
 			body: JSON.stringify({ message: "Missing clipId path parameter." }),
 		}
 	}
@@ -55,21 +54,21 @@ exports.handler = async (event) => {
 		if (!response.Item) {
 			return {
 				statusCode: 404,
-				headers: CORS_HEADERS,
+				headers: corsHeaders,
 				body: JSON.stringify({ message: "Clip not found." }),
 			}
 		}
 
 		return {
 			statusCode: 200,
-			headers: CORS_HEADERS,
+			headers: corsHeaders,
 			body: JSON.stringify(response.Item),
 		}
 	} catch (error) {
 		console.error("Error fetching clip result", error)
 		return {
 			statusCode: 500,
-			headers: CORS_HEADERS,
+			headers: corsHeaders,
 			body: JSON.stringify({ message: "Failed to retrieve clip result. Please try again." }),
 		}
 	}

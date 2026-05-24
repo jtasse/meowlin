@@ -1,6 +1,9 @@
 .pageShell {
 	--page-red: #fe1e03;
 	--page-surface: #0f172a;
+	--panel-bg: var(--page-surface);
+	--panel-border: 3px solid #1e40af;
+	--panel-radius: 12px;
 	min-height: 100vh;
 	padding: 24px 16px 40px;
 	background: var(--page-surface);
@@ -59,16 +62,32 @@
 	filter: drop-shadow(0 2px 0 #60a5fa);
 }
 
-.frameDescription {
+.howItWorksBox {
+	padding: 14px 18px;
+	border-radius: var(--panel-radius);
+	border: var(--panel-border);
+	background: var(--panel-bg);
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35),
+		inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.howItWorksHeading {
+	margin: 0 0 8px;
+	font-family: inherit;
+	font-size: 0.8rem;
+	font-weight: 700;
+	line-height: 1.3;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: #fde047;
+}
+
+.howItWorksText {
 	margin: 0;
-	max-width: 42rem;
-	text-align: center;
+	text-align: left;
 	font-size: 0.95rem;
 	line-height: 1.55;
-	color: #f0e6e4;
-	text-shadow: 0 1px 2px rgba(40, 15, 15, 0.4);
-	position: relative;
-	z-index: 2;
+	color: #f8fafc;
 }
 
 .contentPanel {
@@ -129,17 +148,24 @@
 	flex-direction: column;
 	gap: 16px;
 	width: 100%;
+	padding: 16px 18px;
+	border-radius: var(--panel-radius);
+	border: var(--panel-border);
+	background: var(--panel-bg);
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35),
+		inset 0 1px 0 rgba(255, 255, 255, 0.08);
 	anchor-name: --upload-ui;
 }
 
-/* Mask the top of the reveal burst behind the control row. */
+/* Full-width control strip over the reveal; keep bottom border closed. */
 .uploadControl:has(.revealLayer) .uploadUiLayer {
 	margin-left: calc(-1 * var(--frame-inset-x));
 	margin-right: calc(-1 * var(--frame-inset-x));
-	padding: 4px var(--frame-inset-x) 20px;
+	padding: 16px var(--frame-inset-x) 20px;
 	width: calc(100% + 2 * var(--frame-inset-x));
-	background: var(--page-surface);
-	box-shadow: 0 8px 0 var(--page-surface);
+	border-radius: var(--panel-radius);
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35),
+		inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .stepRow {
@@ -163,24 +189,36 @@
 	gap: 10px;
 	min-width: 0;
 	padding: 16px;
-	border-radius: 12px;
-	border: 3px solid #1e40af;
-	background: rgba(50, 20, 20, 0.28);
-	box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.12);
+	border-radius: var(--panel-radius);
+	border: var(--panel-border);
+	background: var(--panel-bg);
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35),
+		inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.uploadUiLayer .stepBox {
+	padding: 0;
+	border: none;
+	background: transparent;
+	box-shadow: none;
+	border-radius: 0;
 }
 
 .stepHint {
 	margin: 0;
 	font-size: 0.85rem;
 	line-height: 1.45;
-	color: #fff7ed;
+	color: #f8fafc;
 	text-align: left;
-	text-shadow: 0 1px 1px rgba(40, 15, 15, 0.35);
 }
 
 .stepArrow {
 	align-self: start;
-	margin-top: calc(16px + var(--upload-button-height) / 2 - 0.55em);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: var(--upload-button-height);
+	margin-top: 0;
 	font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
 	font-size: clamp(1.75rem, 4vw, 2.25rem);
 	font-weight: 900;
@@ -247,11 +285,18 @@
 	align-items: flex-start;
 	gap: 10px;
 	padding: 14px 18px;
-	border-radius: 12px;
-	border: 3px solid #1e40af;
-	background: rgba(30, 15, 15, 0.94);
-	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35),
-		inset 0 1px 0 rgba(255, 255, 255, 0.1);
+	border-radius: var(--panel-radius);
+	border: var(--panel-border);
+	background: var(--panel-bg);
+	box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.35);
+}
+
+.uploadControl:has(.revealLayer) .statusPanel {
+	padding: 10px 0 0;
+	border: none;
+	background: transparent;
+	box-shadow: none;
+	border-radius: 0;
 }
 
 .progressBar {
@@ -259,8 +304,8 @@
 	height: 16px;
 	overflow: hidden;
 	border-radius: 9999px;
-	background: rgba(15, 23, 42, 0.85);
-	border: 2px solid #60a5fa;
+	background: var(--panel-bg);
+	border: var(--panel-border);
 	box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.35);
 }
 
@@ -382,9 +427,8 @@
 
 .revealGuess {
 	--result-stack-max-width: min(100%, 440px);
-	--result-label-size: clamp(1rem, 2.8vw, 1.4rem);
+	--result-label-size: clamp(0.9rem, 3vw, 1.15rem);
 	--result-title-size: clamp(1.75rem, 5vw, 2.75rem);
-	--result-body-size: clamp(1.2rem, 3.5vw, 1.75rem);
 	--result-emoji-size: clamp(5rem, 14vw, 8.5rem);
 	position: relative;
 	z-index: 10;
@@ -397,6 +441,16 @@
 	gap: 4px;
 	min-height: 220px;
 	width: 100%;
+}
+
+.revealGuess:has(.questionMark) {
+	padding: 24px 32px;
+	border-radius: var(--panel-radius);
+	border: var(--panel-border);
+	background: var(--panel-bg);
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35),
+		inset 0 1px 0 rgba(255, 255, 255, 0.08);
+	max-width: var(--result-stack-max-width);
 }
 
 .questionMark {
@@ -436,77 +490,37 @@
 	align-items: center;
 	gap: 10px;
 	padding: 24px 32px;
-	border-radius: 16px;
-	background: linear-gradient(
-		180deg,
-		rgba(30, 58, 138, 0.95) 0%,
-		rgba(30, 64, 175, 0.92) 100%
-	);
-	border: 4px solid #93c5fd;
-	box-shadow: 0 0 32px rgba(59, 130, 246, 0.45),
-		inset 0 1px 0 rgba(255, 255, 255, 0.12);
+	border-radius: var(--panel-radius);
+	background: var(--panel-bg);
+	border: var(--panel-border);
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35),
+		inset 0 1px 0 rgba(255, 255, 255, 0.08);
 	width: 100%;
 }
 
-.breedIdLabel,
-.breedRevealName,
-.confidenceText {
-	font-family: inherit;
-	font-weight: 800;
-}
-
-.breedIdLabel {
+.resultSectionLabel {
 	margin: 0;
+	width: 100%;
+	text-align: center;
+	font-family: inherit;
 	font-size: var(--result-label-size);
-	color: #bfdbfe;
+	font-weight: 700;
+	line-height: 1.3;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: #93c5fd;
 }
 
 .breedRevealName {
 	margin: 0;
+	font-family: inherit;
+	font-weight: 800;
 	text-align: center;
 	font-size: var(--result-title-size);
 	line-height: 1.3;
-	color: #fffbeb;
+	color: #ffffff;
 	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 	word-break: break-word;
-}
-
-.confidenceText {
-	margin: 0;
-	font-size: var(--result-body-size);
-	color: #bfdbfe;
-	text-align: center;
-	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
-}
-
-.noBreedStack {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 14px;
-	max-width: var(--result-stack-max-width);
-	width: 100%;
-}
-
-.noBreedText {
-	margin: 0;
-	text-align: center;
-	padding: 24px 32px;
-	font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
-	font-size: var(--result-title-size);
-	font-weight: 900;
-	line-height: 1.2;
-	color: #fef08c;
-	background: linear-gradient(
-		180deg,
-		rgba(30, 58, 138, 0.95) 0%,
-		rgba(30, 64, 175, 0.9) 100%
-	);
-	border: 4px solid #93c5fd;
-	border-radius: 16px;
-	box-shadow: 0 0 32px rgba(59, 130, 246, 0.45),
-		inset 0 1px 0 rgba(255, 255, 255, 0.12);
-	width: 100%;
 }
 
 .noBreedEmoji {
@@ -515,16 +529,6 @@
 	color: #ffe500;
 	filter: drop-shadow(3px 3px 0 #1e3a8a) drop-shadow(0 4px 0 #172554)
 		drop-shadow(0 0 16px rgba(254, 229, 0, 0.35));
-}
-
-.confidencePanel {
-	width: 100%;
-	padding: 18px 28px;
-	border-radius: 14px;
-	border: 3px solid #93c5fd;
-	background: rgba(15, 23, 42, 0.96);
-	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3),
-		inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .errorText {
@@ -550,7 +554,8 @@
 	}
 
 	.stepArrow {
-		margin-top: calc(12px + var(--upload-button-height) / 2 - 0.55em);
+		height: var(--upload-button-height);
+		margin-top: 0;
 	}
 
 	.stepBoxReset {

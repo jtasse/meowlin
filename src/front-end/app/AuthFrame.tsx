@@ -3,11 +3,10 @@ import type { ReactNode } from "react"
 import styles from "./page.module.css"
 
 type AuthFrameProps = {
-	description?: string
 	children: ReactNode
 }
 
-export function AuthFrame({ description, children }: AuthFrameProps) {
+export function AuthFrame({ children }: AuthFrameProps) {
 	return (
 		<div className={styles.pageShell}>
 			<section className={styles.frame}>
@@ -16,9 +15,6 @@ export function AuthFrame({ description, children }: AuthFrameProps) {
 						What&apos;s that cat breed?
 					</span>
 				</h1>
-				{description && (
-					<p className={styles.frameDescription}>{description}</p>
-				)}
 				<div className={styles.contentPanel}>{children}</div>
 			</section>
 		</div>

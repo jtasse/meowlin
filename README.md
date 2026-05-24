@@ -69,7 +69,11 @@ Then open `http://localhost:3000`.
 The UI is built as a static export (`output: "export"` in `next.config.ts`) and deployed with [`.github/workflows/pages.yml`](.github/workflows/pages.yml) on pushes to `main`.
 
 1. In the repo **Settings → Pages**, set **Build and deployment** source to **GitHub Actions**.
-2. Under **Settings → Secrets and variables → Actions → Variables**, add **`NEXT_PUBLIC_API_BASE_URL`** with your deployed API stage URL (for example `https://xxxxxxxx.execute-api.us-east-1.amazonaws.com/prod`).
+2. Add **`NEXT_PUBLIC_API_BASE_URL`** with your deployed API stage URL (for example `https://xxxxxxxx.execute-api.us-east-1.amazonaws.com/prod` — **`/prod` is correct**). Either:
+   - **Settings → Secrets and variables → Actions → Variables** (repository-wide), or
+   - **Settings → Environments → github-pages → Environment variables** (only if the workflow’s `build` job uses that environment; this repo does).
+
+   No API key is required for the public demo endpoints.
 3. Redeploy the API with your Pages origin in CORS (the browser sends only scheme + host, no path):
 
    ```powershell

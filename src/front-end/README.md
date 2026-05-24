@@ -25,6 +25,22 @@ npm --prefix src/front-end install
 npm --prefix src/front-end run dev
 ```
 
+Copy `.env.example` to `.env.local` and set `NEXT_PUBLIC_API_BASE_URL` when calling a deployed API from local dev.
+
+## GitHub Pages
+
+Production builds use static export (`output: "export"`). CI sets `NEXT_PUBLIC_BASE_PATH` to `/{repo-name}` and `NEXT_PUBLIC_API_BASE_URL` from the repository Actions variable of the same name. See the root [README](../../README.md#github-pages-static-export).
+
+To verify a Pages build locally (PowerShell):
+
+```powershell
+$env:NEXT_PUBLIC_BASE_PATH = "/meowlin"
+$env:NEXT_PUBLIC_API_BASE_URL = "https://your-api.execute-api.us-east-1.amazonaws.com/prod"
+npm run build
+```
+
+Static files are written to `out/`.
+
 ## Useful Commands
 
 Run these from `src/front-end`:

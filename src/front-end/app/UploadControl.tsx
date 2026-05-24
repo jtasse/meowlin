@@ -24,6 +24,9 @@ type UploadPhase =
 	| "success"
 	| "error"
 
+const UPLOAD_INTRO =
+	"Upload meow audio and see if Meowlin can identify the breed. (Results are mocked for this demo.)"
+
 const TERMINAL_CLIP_STATUSES = new Set(["COMPLETE", "FAILED"])
 const UPLOAD_PROGRESS_BY_PHASE: Record<UploadPhase, number> = {
 	idle: 0,
@@ -143,78 +146,87 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 
 	return (
 		<div className={styles.uploadControl}>
-			<div className={styles.uploadUiLayer}>
-			<div className={styles.stepRow}>
-				<div className={styles.stepBox}>
-					<button
-						type="button"
-						onClick={handleBrowseClick}
-						className={styles.uploadButton}
-					>
-						Choose audio file
-					</button>
-					<input
-						ref={fileInputRef}
-						type="file"
-						accept="audio/*"
-						onChange={handleFileChange}
-						className="hidden"
-					/>
-					<p className={styles.stepHint}>
-						{selectedFile
-							? `Selected: ${selectedFile.name}`
-							: "Choose an audio sample to begin."}
-					</p>
-				</div>
-
-				{selectedFile && (
-					<>
-						<span className={styles.stepArrow} aria-hidden="true">
-							→
-						</span>
-						<div className={styles.stepBox}>
-							<button
-								type="button"
-								className={styles.uploadButton}
-								onClick={handleUploadClick}
-								disabled={uploadPhase !== "idle"}
-							>
-								Upload
-							</button>
-							<p className={styles.stepHint}>
-								Upload your clip for breed identification.
-							</p>
-						</div>
-
-						<div className={`${styles.stepBox} ${styles.stepBoxReset}`}>
-							<button
-								type="button"
-								className={`${styles.uploadButton} ${styles.resetAside}`}
-								onClick={handleResetClick}
-							>
-								Reset
-							</button>
-						</div>
-					</>
-				)}
-			</div>
-
-			{showReveal && (
-				<div className={styles.statusPanel}>
-					<div className={styles.progressBar} aria-hidden="true">
-						<div
-							className={`${styles.progressFill} ${progressFillClassName}`}
-							style={{ width: `${uploadProgress}%` }}
-						/>
-					</div>
-					{uploadStatusMessage && (
-						<p className={styles.progressStatus}>{uploadStatusMessage}</p>
-					)}
-					{uploadError && (
-						<p className={styles.errorText}>{uploadError}</p>
-					)}
-				</div>
+			{!showReveal && (
+				<section className={styles.howItWorksBox} aria-labelledby="how-it-works">
+					<h2 id="how-it-works" className={styles.howItWorksHeading}>
+						How it works
+					</h2>
+					<p className={styles.howItWorksText}>{UPLOAD_INTRO}</p>
+				</section>
 			)}
+
+			<div className={styles.uploadUiLayer}>
+				<div className={styles.stepRow}>
+					<div className={styles.stepBox}>
+						<button
+							type="button"
+							onClick={handleBrowseClick}
+							className={styles.uploadButton}
+						>
+							Choose audio file
+						</button>
+						<input
+							ref={fileInputRef}
+							type="file"
+							accept="audio/*"
+							onChange={handleFileChange}
+							className="hidden"
+						/>
+						<p className={styles.stepHint}>
+							{selectedFile
+								? `Selected: ${selectedFile.name}`
+								: "Choose an audio sample to begin."}
+						</p>
+					</div>
+
+					{selectedFile && (
+						<>
+							<span className={styles.stepArrow} aria-hidden="true">
+								→
+							</span>
+							<div className={styles.stepBox}>
+								<button
+									type="button"
+									className={styles.uploadButton}
+									onClick={handleUploadClick}
+									disabled={uploadPhase !== "idle"}
+								>
+									Upload
+								</button>
+								<p className={styles.stepHint}>
+									Upload your clip for breed identification.
+								</p>
+							</div>
+
+							<div className={`${styles.stepBox} ${styles.stepBoxReset}`}>
+								<button
+									type="button"
+									className={`${styles.uploadButton} ${styles.resetAside}`}
+									onClick={handleResetClick}
+								>
+									Reset
+								</button>
+							</div>
+						</>
+					)}
+				</div>
+
+				{showReveal && (
+					<div className={styles.statusPanel}>
+						<div className={styles.progressBar} aria-hidden="true">
+							<div
+								className={`${styles.progressFill} ${progressFillClassName}`}
+								style={{ width: `${uploadProgress}%` }}
+							/>
+						</div>
+						{uploadStatusMessage && (
+							<p className={styles.progressStatus}>{uploadStatusMessage}</p>
+						)}
+						{uploadError && (
+							<p className={styles.errorText}>{uploadError}</p>
+						)}
+					</div>
+				)}
 			</div>
 
 			{showReveal && (

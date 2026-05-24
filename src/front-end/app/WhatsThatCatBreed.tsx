@@ -75,20 +75,23 @@ export function WhatsThatCatBreed({
 				{showBreedName ? (
 					<div className={styles.breedRevealStack}>
 						<div className={styles.breedRevealCard}>
-							<p className={styles.breedIdLabel}>Breed ID:</p>
+							<p className={styles.resultSectionLabel}>Breed ID</p>
 							<p className={styles.breedRevealName}>{displayBreed}</p>
 						</div>
 						{showConfidence && (
-							<div className={styles.confidencePanel}>
-								<p className={styles.confidenceText}>
-									Confidence: {(confidenceScore * 100).toFixed(2)}%
+							<div className={styles.breedRevealCard}>
+								<p className={styles.resultSectionLabel}>Confidence</p>
+								<p className={styles.breedRevealName}>
+									{Math.round(confidenceScore * 100)}%
 								</p>
 							</div>
 						)}
 					</div>
 				) : showNoBreed ? (
-					<div className={styles.noBreedStack}>
-						<p className={styles.noBreedText}>No breed identified</p>
+					<div className={styles.breedRevealStack}>
+						<div className={styles.breedRevealCard}>
+							<p className={styles.breedRevealName}>No breed identified</p>
+						</div>
 						<span className={styles.noBreedEmoji} aria-hidden="true">
 							😿
 						</span>

@@ -86,6 +86,11 @@ export async function requestUploadUrl(
                 `This file is over ${MAX_UPLOAD_SIZE_MB} MB. Please choose a smaller audio file.`,
             )
         }
+        if (response.status === 429) {
+            throw new Error(
+                "Too many upload requests. Please wait a moment and try again.",
+            )
+        }
         throw new Error(errorBody?.message ?? "Failed to request upload URL.")
     }
 

@@ -262,11 +262,16 @@ Current account-level Lambda concurrency appears to be low, around 10 concurrent
 Recommended MVP controls:
 
 - Keep the API URL private.
-- Use API Gateway throttling.
 - Use short-lived presigned URLs, such as 900 seconds.
 - Validate request bodies early.
 - Keep CloudWatch log retention short later.
 - Add AWS Budgets alerts before sharing publicly.
+
+API throttling and rate limits (deployed):
+
+- **Stage defaults** (`ApiStageThrottleRateLimit` / `ApiStageThrottleBurstLimit`): 50 r/s steady, 100 burst for all routes.
+- **`POST /uploads`** (`ApiUploadThrottleRateLimit` / `ApiUploadThrottleBurstLimit`): 10 r/s steady, 20 burst (API Gateway returns `429`).
+- **Per-IP WAF** (`WafUploadsRateLimitPerIp`): 100 `POST /uploads` requests per IP per 5-minute window minimum (AWS WAF floor); returns `403` when exceeded. Regional Web ACL is associated with the `prod` stage.
 
 S3 upload retention (deployed):
 
@@ -283,7 +288,6 @@ Presigned upload limits (deployed):
 Possible future public/demo controls:
 
 - Cognito authentication
-- AWS WAF rate-based rules
 - More granular IAM permissions
 - DynamoDB TTL for orphaned clip metadata
 

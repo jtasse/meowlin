@@ -72,6 +72,8 @@ Uploaded audio files under the `uploads/` prefix in the raw audio bucket are **a
 
 Presigned uploads are capped at **10 MiB** by default (`MaxUploadSizeBytes` in `template.yaml`; the UI describes this as 10 MB). The API accepts common audio `Content-Type` values (and any `audio/*` type) and signs the PUT for the exact `fileSize` reported by the client.
 
+`POST /uploads` is throttled at the API Gateway stage (10 requests/s steady, 20 burst by default) and rate-limited per IP with AWS WAF (100 requests per 5-minute window minimum). Tune via `ApiUploadThrottle*` and `WafUploadsRateLimitPerIp` in `template.yaml`.
+
 # Caveats
 
 - Although the Merlin bird ID app performs audio processing in the client on the mobile device; for this demo I have shifted this work into AWS.

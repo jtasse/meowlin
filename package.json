@@ -11,9 +11,12 @@
     "license": "MIT",
     "scripts": {
         "unit": "jest",
+        "test:api": "jest",
+        "test:process-clip": "python -m pytest src/api/process-clip -q",
+        "test": "npm run test:api && npm run test:process-clip && npm run test:front-end",
+        "test:front-end": "npm --prefix src/front-end run test",
         "lint": "eslint '*.ts' --quiet --fix",
-        "compile": "tsc",
-        "test": "npm run compile && npm run unit"
+        "compile": "tsc"
     },
     "devDependencies": {
         "@aws-sdk/client-dynamodb": "^3.1044.0",
@@ -21,6 +24,7 @@
         "@aws-sdk/lib-dynamodb": "^3.1044.0",
         "@aws-sdk/s3-request-presigner": "^3.1045.0",
         "esbuild": "^0.21.0",
+        "jest": "^29.7.0",
         "@types/aws-lambda": "^8.10.92",
         "@types/node": "^20.5.7",
         "@typescript-eslint/eslint-plugin": "^5.10.2",

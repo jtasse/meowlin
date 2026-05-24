@@ -8,10 +8,18 @@ import type { NextConfig } from "next";
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const basePath = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").replace(/\/$/, "");
+const pagesUrl = (process.env.NEXT_PUBLIC_PAGES_URL ?? "").replace(/\/$/, "");
 
 const nextConfig: NextConfig = {
   output: "export",
-  ...(basePath ? { basePath, trailingSlash: true } : {}),
+  ...(basePath
+    ? {
+        basePath,
+        trailingSlash: true,
+        // Full URL avoids broken /_next assets on GitHub project Pages.
+        assetPrefix: pagesUrl ? `${pagesUrl}/` : `${basePath}/`,
+      }
+    : {}),
   images: {
     unoptimized: true,
   },

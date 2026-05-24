@@ -17,12 +17,11 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
-      NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
-      NEXT_PUBLIC_APP_ENV: production
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/configure-pages@v4
+        id: pages
 
       - name: Require API base URL
         run: |
@@ -30,6 +29,8 @@ jobs:
             echo "::error::Set repository variable NEXT_PUBLIC_API_BASE_URL to your API Gateway stage URL (e.g. https://xxx.execute-api.us-east-1.amazonaws.com/prod)."
             exit 1
           fi
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
 
       - uses: actions/setup-node@v4
         with:
@@ -39,12 +40,14 @@ jobs:
 
       - name: Install and build
         working-directory: src/front-end
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
+          NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          NEXT_PUBLIC_PAGES_URL: https://${{ github.repository_owner }}.github.io${{ steps.pages.outputs.base_path }}
+          NEXT_PUBLIC_APP_ENV: production
         run: |
           npm ci
           npm run build
-
-      - name: Disable Jekyll on Pages
-        run: touch src/front-end/out/.nojekyll
 
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -7,6 +7,7 @@ import {
 	requestUploadUrl,
 	uploadRawAudio,
 	getClipResult,
+	getAudioFileValidationError,
 	GetClipResultResponse,
 } from "@/lib/uploads"
 import { RevealBackground } from "./RevealBackground"
@@ -28,6 +29,8 @@ const UPLOAD_INTRO =
 	"Upload meow audio and see if Meowlin can identify the breed. (Results are mocked for this demo.)"
 
 const TERMINAL_CLIP_STATUSES = new Set(["COMPLETE", "FAILED"])
+const MAX_CLIP_RESULT_POLL_ATTEMPTS = 45
+const CLIP_RESULT_POLL_INTERVAL_MS = 2000
 const UPLOAD_PROGRESS_BY_PHASE: Record<UploadPhase, number> = {
 	idle: 0,
 	requesting_upload_url: 25,
@@ -84,11 +87,24 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 		const file = event.target.files?.[0] ?? null
 
 		resetUploadState()
-		setSelectedFile(file)
 
-		if (file) {
-			onFileSelected?.(file)
+		if (!file) {
+			setSelectedFile(null)
+			return
 		}
+
+		const validationError = getAudioFileValidationError(file)
+		if (validationError) {
+			setUploadError(validationError)
+			setSelectedFile(null)
+			if (fileInputRef.current) {
+				fileInputRef.current.value = ""
+			}
+			return
+		}
+
+		setSelectedFile(file)
+		onFileSelected?.(file)
 	}
 
 	function handleResetClick() {
@@ -103,10 +119,16 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 		setUploadError(null)
 
 		try {
+			const validationError = getAudioFileValidationError(selectedFile)
+			if (validationError) {
+				throw new Error(validationError)
+			}
+
 			const uploadRequest = await requestUploadUrl({
 				clientClipId: crypto.randomUUID(),
 				fileName: selectedFile.name,
-				contentType: selectedFile.type || "audio/mpeg",
+				contentType: selectedFile.type,
+				fileSize: selectedFile.size,
 			})
 
 			setUploadPhase("uploading_audio")
@@ -114,18 +136,29 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 			await uploadRawAudio({
 				uploadUrl: uploadRequest.uploadUrl,
 				file: selectedFile,
+				contentType: uploadRequest.contentType,
 			})
 
 			setUploadPhase("getting_clip_result")
-			setUploadStatusMessage("Getting clip result...")
 
 			let clipResult = await getClipResult({
 				clipId: uploadRequest.clipId,
 			})
 			setGetClipResultRequest(clipResult)
+			setUploadStatusMessage("Getting clip result...")
 
+			let pollAttempts = 0
 			while (!TERMINAL_CLIP_STATUSES.has(clipResult.clipStatus)) {
-				await new Promise((resolve) => setTimeout(resolve, 2000))
+				if (pollAttempts >= MAX_CLIP_RESULT_POLL_ATTEMPTS) {
+					throw new Error(
+						"Processing is taking longer than expected. Please try again in a moment.",
+					)
+				}
+
+				await new Promise((resolve) =>
+					setTimeout(resolve, CLIP_RESULT_POLL_INTERVAL_MS),
+				)
+				pollAttempts += 1
 
 				clipResult = await getClipResult({
 					clipId: uploadRequest.clipId,
@@ -175,8 +208,13 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 						<p className={styles.stepHint}>
 							{selectedFile
 								? `Selected: ${selectedFile.name}`
-								: "Choose an audio sample to begin."}
+								: "Choose an audio sample to begin (10MB max)"}
 						</p>
+						{uploadError && !showReveal && (
+							<p className={styles.errorText} role="alert">
+								{uploadError}
+							</p>
+						)}
 					</div>
 
 					{selectedFile && (

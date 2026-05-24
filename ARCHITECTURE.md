@@ -48,16 +48,18 @@ Postman / future client
 
 3. `RequestUploadUrlFunction` performs validation.
 4. Lambda generates the authoritative server-side `clipId` using a UUID.
-5. Lambda derives:
+5. Lambda validates `contentType` (allowed audio MIME types), `fileSize` (max `MaxUploadSizeBytes`, default 10 MiB), and `fileName`.
+6. Lambda derives:
 
 ```text
-fileName = {clientClipId}.mp3
-s3Key = uploads/{clipId}/{clientClipId}.mp3
+s3Key = uploads/{clipId}/{clientClipId}.{ext}
 ```
 
-6. Lambda creates a DynamoDB item with status `PENDING_UPLOAD`.
-7. Lambda generates a short-lived presigned S3 `PUT` URL.
-8. Lambda returns upload metadata to the client.
+where `{ext}` comes from the client `fileName` (for example `.mp3`, `.wav`, `.webm`).
+
+7. Lambda creates a DynamoDB item with status `PENDING_UPLOAD`.
+8. Lambda generates a short-lived presigned S3 `PUT` URL signed for the normalized `Content-Type` (max size is enforced in `POST /uploads`, not on the presigned URL).
+9. Lambda returns upload metadata to the client.
 
 Example response:
 
@@ -74,7 +76,7 @@ Example response:
 
 ## Upload Workflow
 
-The client uploads the MP3 file directly to S3 using the returned presigned URL.
+The client uploads the audio file directly to S3 using the returned presigned URL. The `PUT` body size must match the `fileSize` sent to `POST /uploads`.
 
 For Postman:
 
@@ -82,9 +84,9 @@ For Postman:
 Method: PUT
 URL: {{uploadUrl}}
 Headers:
-  Content-Type: audio/mpeg
+  Content-Type: (same as POST /uploads)
 Body:
-  binary MP3 file
+  binary audio file
 ```
 
 The audio file should not pass through API Gateway or Lambda. API Gateway and Lambda only coordinate metadata and presigned URL generation.
@@ -266,12 +268,24 @@ Recommended MVP controls:
 - Keep CloudWatch log retention short later.
 - Add AWS Budgets alerts before sharing publicly.
 
+S3 upload retention (deployed):
+
+- Objects under `uploads/` expire after **7 days** (`UploadObjectExpirationDays` in `template.yaml`, default 7).
+- Incomplete multipart uploads under `uploads/` are aborted after **1 day**.
+- DynamoDB clip rows are not deleted by this lifecycle rule.
+
+Presigned upload limits (deployed):
+
+- Max size **10 MiB** by default (`MaxUploadSizeBytes`).
+- `contentType` must be an allowed audio MIME type (explicit list plus `audio/*`).
+- `fileSize` is validated on `POST /uploads`; the client must send the same `Content-Type` on the presigned `PUT` as returned in the upload response.
+
 Possible future public/demo controls:
 
 - Cognito authentication
 - AWS WAF rate-based rules
 - More granular IAM permissions
-- S3 lifecycle expiration for uploaded demo audio
+- DynamoDB TTL for orphaned clip metadata
 
 ## Current Sequence Diagram
 

@@ -10,7 +10,9 @@ body:
   content: |-
     {
       "clientClipId": "{{$timestamp}}",
-      "contentType": "audio/mpeg"
+      "fileName": "audio_with_meow_sample.mp3",
+      "contentType": "audio/mpeg",
+      "fileSize": 12345
     }
 scripts:
   - type: afterResponse

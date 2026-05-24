@@ -9,6 +9,18 @@ Parameters:
     Description: >
       Globally unique S3 bucket name for raw uploads. Passed to the clip-processing queue
       policy SourceArn without depending on the bucket resource (avoids create ordering cycles).
+  UploadObjectExpirationDays:
+    Type: Number
+    Default: 7
+    MinValue: 1
+    MaxValue: 90
+    Description: Delete objects under uploads/ after this many days (applies to all uploads).
+  MaxUploadSizeBytes:
+    Type: Number
+    Default: 10485760
+    MinValue: 1
+    MaxValue: 52428800
+    Description: Maximum presigned upload size in bytes (default 10 MiB).
 
 Globals:
   Function:
@@ -41,6 +53,7 @@ Resources:
           NODE_OPTIONS: "--v8-pool-size=1"
           CLIPS_TABLE_NAME: MeowlinClips
           RAW_AUDIO_BUCKET_NAME: !Ref RawAudioBucket
+          MAX_UPLOAD_BYTES: !Ref MaxUploadSizeBytes
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref MeowlinClipsTable
@@ -151,6 +164,17 @@ Resources:
       - MeowlinClipProcessingQueuePolicy
     Properties:
       BucketName: !Ref RawAudioBucketName
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireUploads
+            Status: Enabled
+            Prefix: uploads/
+            ExpirationInDays: !Ref UploadObjectExpirationDays
+          - Id: AbortIncompleteMultipartUploads
+            Status: Enabled
+            Prefix: uploads/
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
       CorsConfiguration:
         CorsRules:
           - AllowedOrigins:
@@ -173,8 +197,6 @@ Resources:
                 Rules:
                   - Name: prefix
                     Value: uploads/
-                  - Name: suffix
-                    Value: .mp3
 
 Outputs:
   MeowlinApiUrl:

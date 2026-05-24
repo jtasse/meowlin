@@ -4,6 +4,7 @@ import os
 import random
 from datetime import datetime, timezone
 from decimal import Decimal
+from urllib.parse import unquote_plus
 
 import boto3
 from botocore.exceptions import ClientError
@@ -49,16 +50,31 @@ def get_clip_record(clip_id):
 
 
 def update_clip_record(clip_id, clip_status, breed, confidence):
+    set_parts = [
+        "clipStatus = :status",
+        "processedAt = :processedAt",
+    ]
     expression_attributes = {
         ":status": clip_status,
         ":processedAt": datetime.now(timezone.utc).isoformat(),
-        ":breed": breed,
-        ":confidence": Decimal(str(confidence)) if confidence is not None else None,
     }
-    update_expression = (
-        "SET clipStatus = :status, processedAt = :processedAt, "
-        "identifiedBreed = :breed, confidenceScore = :confidence"
-    )
+    remove_parts = []
+
+    if breed is None:
+        remove_parts.append("identifiedBreed")
+    else:
+        set_parts.append("identifiedBreed = :breed")
+        expression_attributes[":breed"] = breed
+
+    if confidence is None:
+        remove_parts.append("confidenceScore")
+    else:
+        set_parts.append("confidenceScore = :confidence")
+        expression_attributes[":confidence"] = Decimal(str(confidence))
+
+    update_expression = "SET " + ", ".join(set_parts)
+    if remove_parts:
+        update_expression += " REMOVE " + ", ".join(remove_parts)
 
     try:
         response = get_table().update_item(
@@ -74,15 +90,36 @@ def update_clip_record(clip_id, clip_status, breed, confidence):
     return response.get("Attributes")
 
 
+def extract_clip_id_from_s3_key(s3_key):
+    if not s3_key:
+        return None
+
+    decoded_key = unquote_plus(s3_key)
+    parts = decoded_key.split("/")
+    if len(parts) >= 2 and parts[0] == "uploads":
+        return parts[1]
+
+    logger.error("Invalid S3 key format: %s", decoded_key)
+    return None
+
+
 def process_clip(clip_id):
     clip = get_clip_record(clip_id)
     if clip is None:
         logger.warning("Clip not found in DynamoDB, marking as FAILED: %s", clip_id)
         return update_clip_record(clip_id, "FAILED", None, None)
 
+    get_table().update_item(
+        Key={"clipId": clip_id},
+        UpdateExpression="SET clipStatus = :status",
+        ExpressionAttributeValues={":status": "PROCESSING"},
+    )
+
     result = choose_mock_result()
     if result["breed"] is None:
-        logger.info("Mock processing completed with no identified breed for clipId=%s", clip_id)
+        logger.info(
+            "Mock processing completed with no identified breed for clipId=%s", clip_id
+        )
         return update_clip_record(clip_id, "COMPLETE", None, None)
 
     logger.info(
@@ -91,7 +128,9 @@ def process_clip(clip_id):
         result["breed"],
         result["confidence"],
     )
-    return update_clip_record(clip_id, "COMPLETE", result["breed"], result["confidence"])
+    return update_clip_record(
+        clip_id, "COMPLETE", result["breed"], result["confidence"]
+    )
 
 
 def lambda_handler(event, context):
@@ -106,26 +145,20 @@ def lambda_handler(event, context):
             logger.error("Invalid SQS message body: %s", body)
             continue
 
+        clip_id = None
+
         # Handle S3 event wrapped in SQS message
         if "Records" in message and len(message["Records"]) > 0:
             s3_event = message["Records"][0]
             if s3_event.get("eventSource") == "aws:s3":
                 s3_key = s3_event.get("s3", {}).get("object", {}).get("key")
-                if not s3_key:
-                    logger.error("Missing S3 object key in event: %s", s3_event)
-                    continue
-                # Extract clipId from path: uploads/{clipId}/{clientClipId}.mp3
-                parts = s3_key.split("/")
-                if len(parts) >= 2 and parts[0] == "uploads":
-                    clip_id = parts[1]
-                else:
-                    logger.error("Invalid S3 key format: %s", s3_key)
+                clip_id = extract_clip_id_from_s3_key(s3_key)
+                if not clip_id:
                     continue
             else:
                 logger.error("Unknown event source: %s", s3_event.get("eventSource"))
                 continue
         else:
-            # Handle direct SQS message with clipId
             clip_id = message.get("clipId")
             if not clip_id:
                 logger.error("Missing clipId in SQS message: %s", message)

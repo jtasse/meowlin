@@ -7,15 +7,32 @@ if (!config.apiBaseUrl) {
     throw new Error("NEXT_PUBLIC_API_BASE_URL is not configured.")
 }
 
+/** Matches backend MaxUploadSizeBytes (10 MiB). Shown to users as MB. */
+export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+export const MAX_UPLOAD_SIZE_MB = 10
+
+export function getAudioFileValidationError(file: File): string | null {
+    if (!file.type || !file.type.startsWith("audio/")) {
+        return "Please choose a file with a recognized audio type."
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+        return `This file is over ${MAX_UPLOAD_SIZE_MB} MB. Please choose a smaller audio file.`
+    }
+    return null
+}
+
 export type RequestUploadUrlRequest = {
     clientClipId: string
     fileName: string
     contentType: string
+    fileSize: number
 }
 
 export type UploadRawAudioRequest = {
     uploadUrl: string
     file: File
+    /** Must match the Content-Type used when the presigned URL was created. */
+    contentType: string
 }
 
 export type GetClipResultRequest = {
@@ -27,6 +44,7 @@ export type RequestUploadUrlResponse = {
     clientClipId: string
     clipStatus: string
     s3Key: string
+    contentType: string
     uploadUrl: string
     uploadUrlExpiresInSeconds: number
 }
@@ -63,6 +81,11 @@ export async function requestUploadUrl(
 
     if (!response.ok) {
         const errorBody = await response.json().catch(() => null)
+        if (response.status === 413) {
+            throw new Error(
+                `This file is over ${MAX_UPLOAD_SIZE_MB} MB. Please choose a smaller audio file.`,
+            )
+        }
         throw new Error(errorBody?.message ?? "Failed to request upload URL.")
     }
 
@@ -75,7 +98,7 @@ export async function uploadRawAudio(
     const response = await fetch(payload.uploadUrl, {
         method: "PUT",
         headers: {
-            "Content-Type": payload.file.type || "audio/mpeg",
+            "Content-Type": payload.contentType,
         },
         body: payload.file,
     })

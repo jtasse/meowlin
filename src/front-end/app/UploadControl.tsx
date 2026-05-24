@@ -6,7 +6,7 @@ import styles from "./page.module.css"
 import {
 	requestUploadUrl,
 	uploadRawAudio,
-	getClipResult,
+	pollClipResult,
 	getAudioFileValidationError,
 	GetClipResultResponse,
 } from "@/lib/uploads"
@@ -28,9 +28,6 @@ type UploadPhase =
 const UPLOAD_INTRO =
 	"Upload meow audio and see if Meowlin can identify the breed. (Results are mocked for this demo.)"
 
-const TERMINAL_CLIP_STATUSES = new Set(["COMPLETE", "FAILED"])
-const MAX_CLIP_RESULT_POLL_ATTEMPTS = 45
-const CLIP_RESULT_POLL_INTERVAL_MS = 2000
 const UPLOAD_PROGRESS_BY_PHASE: Record<UploadPhase, number> = {
 	idle: 0,
 	requesting_upload_url: 25,
@@ -140,38 +137,21 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 			})
 
 			setUploadPhase("getting_clip_result")
-
-			let clipResult = await getClipResult({
-				clipId: uploadRequest.clipId,
-			})
-			setGetClipResultRequest(clipResult)
 			setUploadStatusMessage("Getting clip result...")
 
-			let pollAttempts = 0
-			while (!TERMINAL_CLIP_STATUSES.has(clipResult.clipStatus)) {
-				if (pollAttempts >= MAX_CLIP_RESULT_POLL_ATTEMPTS) {
-					throw new Error(
-						"Processing is taking longer than expected. Please try again in a moment.",
-					)
-				}
-
-				await new Promise((resolve) =>
-					setTimeout(resolve, CLIP_RESULT_POLL_INTERVAL_MS),
-				)
-				pollAttempts += 1
-
-				clipResult = await getClipResult({
-					clipId: uploadRequest.clipId,
-				})
-				setGetClipResultRequest(clipResult)
-			}
+			const clipResult = await pollClipResult(uploadRequest.clipId, {
+				onPoll: (result) => setGetClipResultRequest(result),
+			})
+			setGetClipResultRequest(clipResult)
 
 			setUploadPhase("success")
 			setUploadStatusMessage("Breed identification completed.")
 		} catch (error) {
 			setUploadPhase("error")
 			setUploadError(
-				error instanceof Error ? error.message : "Unexpected error",
+				error instanceof Error
+					? error.message
+					: "Something went wrong. Please try again in a moment.",
 			)
 			setUploadStatusMessage("")
 		}

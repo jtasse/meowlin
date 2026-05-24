@@ -8,6 +8,18 @@ Meowlin is a serverless AWS demo that simulates identifying cat breeds from uplo
 
 I have created this project for my portfolio in order to demonstrate AWS serverless fundamentals listed in the [Core Stack](#core-stack) below.
 
+## Try it out
+
+The live demo is hosted on GitHub Pages at:
+
+**[https://jtasse.github.io/meowlin/](https://jtasse.github.io/meowlin/)**
+
+### Steps
+
+1. Open the link above in your browser (desktop or mobile).
+2. Click **Choose audio file** and pick a short audio clip (10 MB max; common audio formats work).
+3. Click **Upload** and wait for the progress bar to finish.
+4. Watch the breed reveal (**Breed ID** and **Confidence** are mocked for this demo).
 ## Core Stack
 
 | AWS Component                          | Description                                                             |

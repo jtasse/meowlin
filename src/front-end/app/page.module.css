@@ -304,12 +304,31 @@
 	isolation: isolate;
 }
 
-/* Pane height = full width × 9/16 × scale (padding % is relative to width). */
+/* Desktop: fixed 16:9 box; mobile overrides to auto-height column in @media below. */
 .revealMediaOuter {
 	position: relative;
 	width: 100%;
 	padding-bottom: calc(100% / var(--reveal-video-aspect) * var(--reveal-backdrop-scale));
 	overflow: hidden;
+}
+
+.revealBackdropHost {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+}
+
+.revealResultsHost {
+	position: absolute;
+	z-index: 10;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	width: 41%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: none;
 }
 
 .uploadUiLayer {
@@ -509,14 +528,18 @@
 	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
-.revealArena > * {
-	pointer-events: auto;
-}
-
 .revealCat {
-	grid-column: 1;
-	position: static;
+	position: absolute;
 	z-index: 10;
+	left: var(--reveal-cat-anchor-x);
+	top: var(--reveal-cat-anchor-y);
+	transform: translate(-50%, -50%);
+	width: var(--reveal-cat-stage-size);
+	height: var(--reveal-cat-stage-size);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: auto;
 	overflow: visible;
 }
 
@@ -539,15 +562,12 @@
 }
 
 .catStage {
-	position: absolute;
-	left: var(--reveal-cat-anchor-x);
-	top: var(--reveal-cat-anchor-y);
-	transform: translate(-50%, -50%);
+	position: relative;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: var(--reveal-cat-stage-size);
-	height: var(--reveal-cat-stage-size);
+	width: 92%;
+	height: 92%;
 	overflow: visible;
 	z-index: 1;
 }
@@ -572,28 +592,8 @@
 	filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
 }
 
-.revealArena {
-	display: grid;
-	grid-template-columns: 1.15fr 0.85fr;
-	align-items: center;
-	gap: 16px 28px;
-	position: absolute;
-	inset: 0;
-	z-index: 1;
-	width: 100%;
-	height: 100%;
-	padding: 0;
-	overflow: visible;
-	pointer-events: none;
-}
-
-.revealGuessColumn {
-	grid-column: 2;
-	position: relative;
-	align-self: stretch;
-	display: flex;
-	justify-content: center;
-	min-height: 100%;
+.revealResultsHost .revealGuess {
+	pointer-events: auto;
 }
 
 .revealGuess {
@@ -711,7 +711,7 @@
 	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
 	.stepRow:has(.stepArrow) {
 		grid-template-columns: 1fr auto 1fr;
 	}
@@ -739,23 +739,83 @@
 		max-width: 200px;
 	}
 
-	.revealArena {
-		grid-template-columns: 1fr;
-		grid-template-rows: auto auto;
+	.uploadUiLayer .stepHint {
+		text-align: center;
 	}
 
-	.revealGuessColumn {
-		grid-column: 1;
+	/* Narrow viewports: stack burst+cat, then results in normal document flow. */
+	.revealMediaOuter {
+		padding-bottom: 0;
+		overflow: visible;
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		padding-bottom: 4px;
+	}
+
+	.revealBackdropHost {
+		position: relative;
+		width: 100%;
+		aspect-ratio: 16 / 9;
+		flex-shrink: 0;
+		overflow: hidden;
+		isolation: isolate;
 	}
 
 	.revealLayer {
-		--reveal-cat-anchor-x: 44%;
-		--reveal-cat-anchor-y: 36%;
-		--reveal-cat-stage-size: min(280px, 64vw);
+		--reveal-cat-anchor-x: 26%;
+		--reveal-cat-anchor-y: 48%;
+		--reveal-cat-stage-size: min(220px, 54vw);
+	}
+
+	.revealCat {
+		position: absolute;
+		inset: auto;
+		left: var(--reveal-cat-anchor-x);
+		top: var(--reveal-cat-anchor-y);
+		transform: translate(-50%, -50%);
+		width: var(--reveal-cat-stage-size);
+		height: var(--reveal-cat-stage-size);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 2;
+	}
+
+	.catStage {
+		width: 92%;
+		height: 92%;
+	}
+
+	.revealResultsHost {
+		position: static;
+		width: 100%;
+		padding: 0 10px;
+		box-sizing: border-box;
+		pointer-events: auto;
 	}
 
 	.revealGuess {
-		min-height: 200px;
+		min-height: 0;
+		margin-top: 0;
+		width: 100%;
+		max-width: none;
+		--result-stack-max-width: 100%;
+		--result-title-size: clamp(1.3rem, 5.2vw, 2rem);
+		--result-label-size: clamp(0.78rem, 2.6vw, 1rem);
+	}
+
+	.breedRevealStack {
+		max-width: none;
+	}
+
+	.frame:has(.revealLayer) {
+		overflow: visible;
+		padding-bottom: var(--frame-inset-bottom);
+	}
+
+	.pageShell {
+		align-items: flex-start;
 	}
 }
 
@@ -801,5 +861,17 @@
 		margin-top: 0;
 		margin-bottom: -4px;
 		transform: rotate(90deg);
+	}
+
+	.revealLayer {
+		--reveal-cat-stage-size: min(200px, 52vw);
+	}
+
+	.breedRevealCard {
+		padding: 12px 14px;
+	}
+
+	.breedRevealName {
+		font-size: clamp(1.15rem, 4.8vw, 1.65rem);
 	}
 }

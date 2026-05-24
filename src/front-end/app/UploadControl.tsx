@@ -10,7 +10,6 @@ import {
 	getAudioFileValidationError,
 	GetClipResultResponse,
 } from "@/lib/uploads"
-import { RevealBackground } from "./RevealBackground"
 import { WhatsThatCatBreed } from "./WhatsThatCatBreed"
 
 type UploadControlProps = {
@@ -249,22 +248,19 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 
 			{showReveal && (
 				<div className={styles.revealLayer}>
-					<div className={styles.revealMediaOuter}>
-						<RevealBackground />
-						<WhatsThatCatBreed
-							revealed={revealComplete}
-							identifiedBreed={
-								revealComplete
-									? (getClipResultRequest?.identifiedBreed ?? null)
-									: null
-							}
-							confidenceScore={
-								revealComplete
-									? getClipResultRequest?.confidenceScore ?? null
-									: null
-							}
-						/>
-					</div>
+					<WhatsThatCatBreed
+						revealed={revealComplete}
+						identifiedBreed={
+							revealComplete
+								? (getClipResultRequest?.identifiedBreed ?? null)
+								: null
+						}
+						confidenceScore={
+							revealComplete
+								? (getClipResultRequest?.confidenceScore ?? null)
+								: null
+						}
+					/>
 				</div>
 			)}
 		</div>

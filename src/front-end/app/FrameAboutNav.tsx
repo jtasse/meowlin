@@ -164,8 +164,7 @@ export function FrameAboutNav() {
 						Meowlin is a React + AWS solution that simulates the
 						identification of cat breeds based on uploaded meow audio. It
 						leverages AWS SAM, API Gateway, Lambda, S3, SQS, and DynamoDB to
-						simulate processing them asynchronously to determine if any meows
-						and corresponding cat breeds can be identified. For more info,
+						process audio clips asynchronously before returning a mocked cat breed ID result. For more info,
 						check out the{" "}
 						<ExternalDrawerLink href="https://github.com/jtasse/meowlin/blob/main/README.md">
 							docs

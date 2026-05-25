@@ -24,7 +24,9 @@ export function BreedRevealPanel({
 	if (showBreedName) {
 		return (
 			<div className={styles.breedRevealStack}>
-				<div className={styles.breedRevealCard}>
+				<div
+					className={`${styles.breedRevealCard} ${styles.breedRevealCardIdentified}`}
+				>
 					<p className={styles.resultSectionLabel}>Breed ID</p>
 					<p className={styles.breedRevealName}>{displayBreed}</p>
 				</div>
@@ -43,7 +45,10 @@ export function BreedRevealPanel({
 	if (showNoBreed) {
 		return (
 			<div className={styles.breedRevealStack}>
-				<div className={styles.breedRevealCard}>
+				<div
+					className={`${styles.breedRevealCard} ${styles.breedRevealCardNoBreed}`}
+				>
+					<p className={styles.resultSectionLabel}>Breed ID</p>
 					<p className={styles.breedRevealName}>No breed identified</p>
 				</div>
 				<span className={styles.noBreedEmoji} aria-hidden="true">

@@ -3,6 +3,7 @@
 import { useRef, useState } from "react"
 
 import styles from "./page.module.css"
+import { loadDemoSampleFile } from "@/lib/demoSample"
 import {
 	requestUploadUrl,
 	uploadRawAudio,
@@ -10,6 +11,7 @@ import {
 	getAudioFileValidationError,
 	GetClipResultResponse,
 } from "@/lib/uploads"
+import { HowItWorksDrawer } from "./HowItWorksDrawer"
 import { WhatsThatCatBreed } from "./WhatsThatCatBreed"
 
 type UploadControlProps = {
@@ -23,9 +25,6 @@ type UploadPhase =
 	| "getting_clip_result"
 	| "success"
 	| "error"
-
-const UPLOAD_INTRO =
-	"Upload meow audio and see if Meowlin can identify the breed. (Results are mocked for this demo.)"
 
 const UPLOAD_PROGRESS_BY_PHASE: Record<UploadPhase, number> = {
 	idle: 0,
@@ -46,6 +45,7 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 	const [uploadPhase, setUploadPhase] = useState<UploadPhase>("idle")
 	const [uploadStatusMessage, setUploadStatusMessage] = useState("")
 	const [uploadError, setUploadError] = useState<string | null>(null)
+	const [isLoadingDemoSample, setIsLoadingDemoSample] = useState(false)
 	const uploadProgress = UPLOAD_PROGRESS_BY_PHASE[uploadPhase]
 	const progressFillClassName =
 		uploadPhase === "success"
@@ -56,6 +56,8 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 
 	const showReveal = uploadPhase !== "idle"
 	const revealComplete = uploadPhase === "success"
+	const step1Current = !selectedFile
+	const step2Current = Boolean(selectedFile) && uploadPhase === "idle"
 
 	function resetUploadState(options?: { clearSelectedFile?: boolean }) {
 		setGetClipResultRequest(null)
@@ -65,18 +67,40 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 
 		if (options?.clearSelectedFile) {
 			setSelectedFile(null)
+			setIsLoadingDemoSample(false)
 			if (fileInputRef.current) {
 				fileInputRef.current.value = ""
 			}
 		}
 	}
 
-	function handleBrowseClick() {
-		if (selectedFile) {
-			handleResetClick()
-			return
-		}
+	function handleChooseYourOwnClick() {
 		fileInputRef.current?.click()
+	}
+
+	async function handleUseDemoSampleClick() {
+		resetUploadState({ clearSelectedFile: true })
+		setIsLoadingDemoSample(true)
+		setUploadError(null)
+
+		try {
+			const file = await loadDemoSampleFile()
+			const validationError = getAudioFileValidationError(file)
+			if (validationError) {
+				setUploadError(validationError)
+				return
+			}
+			setSelectedFile(file)
+			onFileSelected?.(file)
+		} catch (error) {
+			setUploadError(
+				error instanceof Error
+					? error.message
+					: "Could not load the demo sample. Please try again.",
+			)
+		} finally {
+			setIsLoadingDemoSample(false)
+		}
 	}
 
 	function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -158,40 +182,57 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 
 	return (
 		<div className={styles.uploadControl}>
-			{!showReveal && (
-				<section className={styles.howItWorksBox} aria-labelledby="how-it-works">
-					<h2 id="how-it-works" className={styles.howItWorksHeading}>
-						How it works
-					</h2>
-					<p className={styles.howItWorksText}>{UPLOAD_INTRO}</p>
-				</section>
-			)}
+			<HowItWorksDrawer />
 
 			<div className={styles.uploadUiLayer}>
 				<div className={styles.stepRow}>
-					<div className={styles.stepBox}>
-						<button
-							type="button"
-							onClick={handleBrowseClick}
-							className={styles.uploadButton}
+					<div className={`${styles.stepColumn} ${styles.stepColumnChoose}`}>
+						<div
+							className={`${styles.stepBox} ${step1Current ? styles.stepBoxCurrent : ""}`}
 						>
-							Choose audio file
-						</button>
-						<input
-							ref={fileInputRef}
-							type="file"
-							accept="audio/*"
-							onChange={handleFileChange}
-							className="hidden"
-						/>
-						<p className={styles.stepHint}>
-							{selectedFile
-								? `Selected: ${selectedFile.name}`
-								: "Choose an audio sample to begin (10MB max)"}
-						</p>
-						{uploadError && !showReveal && (
-							<p className={styles.errorText} role="alert">
-								{uploadError}
+							<p className={styles.stepHeading}>Step 1: Choose audio to upload</p>
+							<div className={styles.stepChooseStack}>
+								<button
+									type="button"
+									onClick={handleUseDemoSampleClick}
+									className={styles.uploadButton}
+									disabled={isLoadingDemoSample || uploadPhase !== "idle"}
+								>
+									{isLoadingDemoSample
+										? "Loading sample…"
+										: "Use demo sample"}
+								</button>
+								<span className={styles.stepOr} aria-hidden="true">
+									OR
+								</span>
+								<button
+									type="button"
+									onClick={handleChooseYourOwnClick}
+									className={`${styles.uploadButton} ${styles.uploadButtonStacked}`}
+									disabled={isLoadingDemoSample || uploadPhase !== "idle"}
+								>
+									<span>Choose your own</span>
+									<span className={styles.uploadButtonSubtext}>
+										(10 MB max)
+									</span>
+								</button>
+							</div>
+							<input
+								ref={fileInputRef}
+								type="file"
+								accept="audio/*"
+								onChange={handleFileChange}
+								className="hidden"
+							/>
+							{uploadError && !showReveal && (
+								<p className={styles.errorText} role="alert">
+									{uploadError}
+								</p>
+							)}
+						</div>
+						{selectedFile && (
+							<p className={styles.stepFootnote}>
+								Selected file: {selectedFile.name}
 							</p>
 						)}
 					</div>
@@ -201,24 +242,30 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 							<span className={styles.stepArrow} aria-hidden="true">
 								→
 							</span>
-							<div className={styles.stepBox}>
+							<div className={styles.stepColumn}>
+								<div
+									className={`${styles.stepBox} ${styles.stepBoxUpload} ${step2Current ? styles.stepBoxCurrent : ""}`}
+								>
+									<p className={styles.stepHeading}>
+										Step 2: Upload selected file
+									</p>
+									<button
+										type="button"
+										className={`${styles.uploadButton} ${styles.uploadButtonCentered}`}
+										onClick={handleUploadClick}
+										disabled={uploadPhase !== "idle"}
+									>
+										Upload
+									</button>
+								</div>
+								<p className={styles.stepFootnote}>
+									Send your clip to Meowlin for processing.
+								</p>
+							</div>
+							<div className={styles.stepResetColumn}>
 								<button
 									type="button"
 									className={styles.uploadButton}
-									onClick={handleUploadClick}
-									disabled={uploadPhase !== "idle"}
-								>
-									Upload
-								</button>
-								<p className={styles.stepHint}>
-									Upload your clip for breed identification.
-								</p>
-							</div>
-
-							<div className={`${styles.stepBox} ${styles.stepBoxReset}`}>
-								<button
-									type="button"
-									className={`${styles.uploadButton} ${styles.resetAside}`}
 									onClick={handleResetClick}
 								>
 									Reset

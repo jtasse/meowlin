@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import type { RefObject } from "react"
 
 import {
 	getBreedImage,
@@ -13,12 +14,14 @@ import { RevealBackground } from "./RevealBackground"
 import styles from "./page.module.css"
 
 type WhatsThatCatBreedProps = {
+	resultsHostRef?: RefObject<HTMLDivElement | null>
 	revealed: boolean
 	identifiedBreed: string | null
 	confidenceScore?: number | null
 }
 
 export function WhatsThatCatBreed({
+	resultsHostRef,
 	revealed,
 	identifiedBreed,
 	confidenceScore = null,
@@ -73,7 +76,7 @@ export function WhatsThatCatBreed({
 				</div>
 			</div>
 
-			<div className={styles.revealResultsHost}>
+			<div ref={resultsHostRef} className={styles.revealResultsHost}>
 				<div className={styles.revealGuess}>
 					<BreedRevealPanel
 						revealed={revealed}

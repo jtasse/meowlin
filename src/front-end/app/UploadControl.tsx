@@ -1,9 +1,13 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import styles from "./page.module.css"
 import { loadDemoSampleFile } from "@/lib/demoSample"
+import {
+	focusNextOnMobile,
+	scrollStepIntoView,
+} from "@/lib/focusNextOnMobile"
 import {
 	requestUploadUrl,
 	uploadRawAudio,
@@ -37,6 +41,11 @@ const UPLOAD_PROGRESS_BY_PHASE: Record<UploadPhase, number> = {
 
 export function UploadControl({ onFileSelected }: UploadControlProps) {
 	const fileInputRef = useRef<HTMLInputElement>(null)
+	const step2ColumnRef = useRef<HTMLDivElement>(null)
+	const uploadButtonRef = useRef<HTMLButtonElement>(null)
+	const revealLayerRef = useRef<HTMLDivElement>(null)
+	const resultsHostRef = useRef<HTMLDivElement>(null)
+	const uploadScrollStartedRef = useRef(false)
 	const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
 	const [getClipResultRequest, setGetClipResultRequest] =
@@ -58,6 +67,40 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 	const revealComplete = uploadPhase === "success"
 	const step1Current = !selectedFile
 	const step2Current = Boolean(selectedFile) && uploadPhase === "idle"
+	const stepSlotsPending = !selectedFile
+
+	useEffect(() => {
+		if (!selectedFile || uploadPhase !== "idle") return
+
+		const frame = requestAnimationFrame(() => {
+			focusNextOnMobile(step2ColumnRef.current, uploadButtonRef.current)
+		})
+		return () => cancelAnimationFrame(frame)
+	}, [selectedFile, uploadPhase])
+
+	useEffect(() => {
+		if (uploadPhase === "idle") {
+			uploadScrollStartedRef.current = false
+			return
+		}
+
+		if (uploadScrollStartedRef.current) return
+		uploadScrollStartedRef.current = true
+
+		const frame = requestAnimationFrame(() => {
+			scrollStepIntoView(revealLayerRef.current, { block: "end" })
+		})
+		return () => cancelAnimationFrame(frame)
+	}, [uploadPhase])
+
+	useEffect(() => {
+		if (uploadPhase !== "success") return
+
+		const frame = requestAnimationFrame(() => {
+			scrollStepIntoView(resultsHostRef.current)
+		})
+		return () => cancelAnimationFrame(frame)
+	}, [uploadPhase])
 
 	function resetUploadState(options?: { clearSelectedFile?: boolean }) {
 		setGetClipResultRequest(null)
@@ -185,7 +228,9 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 			<HowItWorksDrawer />
 
 			<div className={styles.uploadUiLayer}>
-				<div className={styles.stepRow}>
+				<div
+					className={`${styles.stepRow} ${selectedFile ? styles.stepRowReady : ""}`}
+				>
 					<div className={`${styles.stepColumn} ${styles.stepColumnChoose}`}>
 						<div
 							className={`${styles.stepBox} ${step1Current ? styles.stepBoxCurrent : ""}`}
@@ -237,42 +282,54 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 						)}
 					</div>
 
-					{selectedFile && (
-						<>
-							<span className={styles.stepArrow} aria-hidden="true">
-								→
-							</span>
-							<div className={styles.stepColumn}>
-								<div
-									className={`${styles.stepBox} ${styles.stepBoxUpload} ${step2Current ? styles.stepBoxCurrent : ""}`}
-								>
-									<p className={styles.stepHeading}>
-										Step 2: Upload selected file
-									</p>
-									<button
-										type="button"
-										className={`${styles.uploadButton} ${styles.uploadButtonCentered}`}
-										onClick={handleUploadClick}
-										disabled={uploadPhase !== "idle"}
-									>
-										Upload
-									</button>
-								</div>
-								<p className={styles.stepFootnote}>
-									Send your clip to Meowlin for processing.
-								</p>
-							</div>
-							<div className={styles.stepResetColumn}>
-								<button
-									type="button"
-									className={styles.uploadButton}
-									onClick={handleResetClick}
-								>
-									Reset
-								</button>
-							</div>
-						</>
-					)}
+					<span
+						className={`${styles.stepArrow} ${stepSlotsPending ? styles.stepSlotPending : ""}`}
+						aria-hidden="true"
+					>
+						→
+					</span>
+					<div
+						ref={step2ColumnRef}
+						className={`${styles.stepColumn} ${stepSlotsPending ? styles.stepSlotPending : ""}`}
+						aria-hidden={stepSlotsPending}
+					>
+						<div
+							className={`${styles.stepBox} ${styles.stepBoxUpload} ${step2Current ? styles.stepBoxCurrent : ""}`}
+						>
+							<p className={styles.stepHeading}>
+								Step 2: Upload selected file
+							</p>
+							<button
+								ref={uploadButtonRef}
+								type="button"
+								className={`${styles.uploadButton} ${styles.uploadButtonCentered}`}
+								onClick={handleUploadClick}
+								disabled={stepSlotsPending || uploadPhase !== "idle"}
+								tabIndex={stepSlotsPending ? -1 : undefined}
+							>
+								Upload
+							</button>
+						</div>
+						<p className={styles.stepFootnote}>
+							{selectedFile
+								? "Send your clip to Meowlin for processing."
+								: "\u00a0"}
+						</p>
+					</div>
+					<div
+						className={`${styles.stepResetColumn} ${stepSlotsPending ? styles.stepSlotPending : ""}`}
+						aria-hidden={stepSlotsPending}
+					>
+						<button
+							type="button"
+							className={styles.uploadButton}
+							onClick={handleResetClick}
+							disabled={stepSlotsPending}
+							tabIndex={stepSlotsPending ? -1 : undefined}
+						>
+							Reset
+						</button>
+					</div>
 				</div>
 
 				{showReveal && (
@@ -294,8 +351,9 @@ export function UploadControl({ onFileSelected }: UploadControlProps) {
 			</div>
 
 			{showReveal && (
-				<div className={styles.revealLayer}>
+				<div ref={revealLayerRef} className={styles.revealLayer}>
 					<WhatsThatCatBreed
+						resultsHostRef={resultsHostRef}
 						revealed={revealComplete}
 						identifiedBreed={
 							revealComplete

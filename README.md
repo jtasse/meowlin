@@ -163,6 +163,16 @@ graph LR
 
 > **NOTE**: to view a sequence digram showing the process in more detail, see [ARCHITECTURE.md](./ARCHITECTURE.md#current-sequence-diagram).
 
+## Attributions
+| Asset                            | Description                                                               |
+| :---------------------------------- | :------------------------------------------------------------------------ |
+| [Who's That Pokemon?](https://bulbapedia.bulbagarden.net/wiki/Who%27s_That_Pok%C3%A9mon%3F)  | Article explaining the history of "Who's That Pokemon?" |
+| [Who's That Pokemon Templates](https://biochao.gumroad.com/l/qaoas?_gl=1*13d87r7*_ga*MTI1OTYxMTYzLjE3Nzk0NjM2MjQ.*_ga_6LJN6D94N6*czE3Nzk1NTQ2NzEkbzIkZzEkdDE3Nzk1NTYyMTUkajYwJGwwJGgw) | Fantastic animations and other assets that honor the spirit of "Who's That Pokemon?") |
+| [Maine Coon](https://www.zooplus.co.uk/magazine/wp-content/uploads/2019/03/maine-coon-cat-breed-768x658.webp) | Image of a Maine Coon cat |
+| [Siamese](https://www.cozycatfurniture.com/image/siamese-cat-cover.jpg) | Image of a Siamese cat |
+| [American Shorthair](https://consumer-cms.petfinder.com/sites/default/files/images/content/American%20Shorthair%20Cat%202.jpg) | Image of an American Shorthair cat |
+| [Mystery cat](https://www.vecteezy.com/vector-art/29900485-mysterious-cat-silhouette-or-vector) | Myster cat/silhouette image |
+
 ## See Also
 
 | Document                            | Description                                                               |

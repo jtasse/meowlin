@@ -4,7 +4,7 @@ const siteTitle = "What's that cat breed? | Meowlin"
 
 /** At least 100 characters for LinkedIn / Open Graph description warnings. */
 const siteDescription =
-	"Meowlin is a serverless portfolio demo that simulates identifying cat breeds from meow audio. Upload a short clip, watch the breed reveal, and explore a React UI backed by AWS SAM, API Gateway, Lambda, S3, SQS, and DynamoDB."
+	"Meowlin is a React + serverless AWS demo that simulates identifying cat breeds from uploaded meow audio. Upload a short clip, watch the breed reveal, and explore a React UI backed by AWS SAM, API Gateway, Lambda, S3, SQS, and DynamoDB."
 
 function siteOrigin(): URL {
 	// CI sets NEXT_PUBLIC_PAGES_URL to the full Pages URL (already includes base path).

@@ -23,17 +23,38 @@ The application should be built in small, working increments. The first mileston
 
 ## Current High-Level Architecture
 
-```text
-Postman / future client
-  -> API Gateway HTTP API
-  -> RequestUploadUrl Lambda
-  -> DynamoDB MeowlinClips table
-  -> S3 raw audio bucket via presigned PUT URL
-  -> SQS processing queue
-  -> ProcessClip Lambda
-  -> Mocked classifier
-  -> DynamoDB updated with results
+```mermaid
+flowchart TB
+    Client["Postman or Next.js UI"]
+
+    subgraph Api["API layer"]
+        APIGW["API Gateway HTTP API"]
+        UploadFn["RequestUploadUrl Lambda"]
+        GetFn["GetClipResult Lambda"]
+    end
+
+    DDB[("MeowlinClips DynamoDB")]
+    S3[("S3 raw audio bucket")]
+    SQS["SQS processing queue"]
+    ProcessFn["ProcessClip Lambda"]
+    Mock["Mock classifier"]
+
+    Client -->|"POST /uploads"| APIGW
+    APIGW --> UploadFn
+    UploadFn --> DDB
+    UploadFn -.->|"presigned PUT URL"| Client
+    Client -->|"upload audio (direct)"| S3
+    S3 --> SQS
+    SQS --> ProcessFn
+    ProcessFn --> Mock
+    Mock --> ProcessFn
+    ProcessFn --> DDB
+    Client -->|"GET /clips/:clipId"| APIGW
+    APIGW --> GetFn
+    GetFn --> DDB
 ```
+
+For step-by-step timing, see [Current Sequence Diagram](#current-sequence-diagram).
 
 ## Primary Workflow: Request Upload and Store Clip Metadata
 
@@ -214,7 +235,7 @@ src/front-end/                              # Next.js UI
 ## Runtime and Language Choices
 
 - Node.js is used for API-oriented Lambda functions such as `RequestUploadUrlFunction`.
-- Node.js could have also been used to implement the mocked `ProcessClipFunction`, but Python was chosen as it would be a better fit if real classification were added later
+- Node.js could have also been used to implement the mocked `ProcessClipFunction`, but Python was chosen as it would be a better fit if real classification were added later.
 
 ## SAM / Infrastructure Approach
 

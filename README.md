@@ -153,15 +153,16 @@ The following diagram illustrates how data moves through the system from the ini
 graph LR
     A[Client] -->|1. Request Upload| B(API Gateway)
     B --> C[Lambda: API]
-    C -->|2. Create Metadata| D[(DynamoDB)]
+    C -->|2. Create placeholder record| D[(DynamoDB)]
     C -->|3. Return Presigned URL| A
     A -->|4. Upload audio| E{S3 Bucket}
     E -->|5. Trigger Event| F[SQS Queue]
     F --> G[Lambda: Processor]
     G -->|6. Update Result| D
+    G -->|7. Return result|A
 ```
 
-> **NOTE**: to view a sequence digram showing the process in more detail, see [ARCHITECTURE.md](./ARCHITECTURE.md#current-sequence-diagram).
+> **NOTE**: For the full architecture diagram and a detailed sequence diagram, see [ARCHITECTURE.md](./ARCHITECTURE.md#current-high-level-architecture).
 
 ## Attributions
 | Asset                            | Description                                                               |

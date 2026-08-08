@@ -1,0 +1,17 @@
+.canvas {
+	min-height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #fe1e03;
+	padding: 24px;
+}
+
+.title {
+	margin: 0;
+	text-align: center;
+}
+
+.titleLine {
+	font-size: clamp(3rem, 14vw, 9rem);
+}

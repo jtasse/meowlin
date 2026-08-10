@@ -1,6 +1,8 @@
 # Contributing to Meowlin
 
-This project is a serverless AWS demo application. It should stay practical, low-cost, and easy to explain in a portfolio, blog post, or video.
+This project is a serverless AWS demo application. It should stay practical, low-cost, and easy to explain in a portfolio, blog post, or video. 
+
+> **NOTE**: The public AWS/GitHub Pages demo is retired
 
 The primary contributor currently uses AI coding assistants in VS Code, so this file includes guidance for both human contributors and coding assistants.
 

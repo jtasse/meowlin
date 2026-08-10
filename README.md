@@ -6,20 +6,20 @@ Meowlin is a serverless AWS demo that simulates identifying cat breeds from uplo
 
 ## Purpose
 
-I have created this project for my portfolio in order to demonstrate AWS serverless fundamentals listed in the [Core Stack](#core-stack) below.
+I built this project for my portfolio to demonstrate the AWS serverless fundamentals listed in [Core Stack](#core-stack).
 
-## Try it out
+The live AWS stack and GitHub Pages site have been taken down to avoid ongoing charges. The source, SAM template, and local-run path remain so the architecture is still easy to inspect or rebuild.
 
-The live demo is hosted on GitHub Pages at:
+## Watch a video of the demo
 
-**[https://jtasse.github.io/meowlin/](https://jtasse.github.io/meowlin/)**
+[Video walkthrough on YouTube](https://youtu.be/JFJGaR2UGt0)
 
-### Steps
+In the recording you’ll see:
 
-1. Open the link above in your browser (desktop or mobile).
-2. Click **Choose audio file** and pick a short audio clip (10 MB max; common audio formats work).
-3. Click **Upload** and wait for the progress bar to finish.
-4. Watch the breed reveal (**Breed ID** and **Confidence** are mocked for this demo).
+1. Choosing a short audio clip (10 MB max; common audio formats).
+2. Upload progress completing.
+3. The breed reveal (**Breed ID** and **Confidence** are mocked for this demo).
+
 ## Core Stack
 
 | AWS Component                          | Description                                                             |
@@ -28,7 +28,7 @@ The live demo is hosted on GitHub Pages at:
 | **API Gateway**                        | REST API                                                                |
 | **Lambda**                             | Serverless functions (Node.js 22.x for API, Python 3.12 for Processing) |
 | **S3**                                 | Raw audio storage (uploads expire after 3 days by default)              |
-| **DynamoDB**                           | Persistentence of metadata and results                                  |
+| **DynamoDB**                           | Persistence of metadata and results                                     |
 | **SQS**                                | Messaging to support asynchronous processing                            |
 
 ## Inspiration
@@ -37,15 +37,17 @@ The overall solution was inspired by the [Merlin](https://merlin.allaboutbirds.o
 
 ## Prerequisites
 
-Before running the commands below, ensure you have the following installed:
+To run or redeploy locally, ensure you have:
 
-- **[AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)**: Used for building and local emulation. [Install Guide]
+- **[AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)**: Used for building and local emulation
 - **[Docker Desktop](https://docs.docker.com/desktop/)**: Required by SAM to run Lambda functions in a local container environment
 - **[Node.js 22.x](https://nodejs.org/en/download)**: Required to build the API Lambda functions
 - **[Python 3.12](https://www.python.org/downloads/release/python-3120/)**: Required to build the processing/classifier Lambda functions
 - **[AWS CLI](https://aws.amazon.com/cli/)**: Configured with credentials if you intend to deploy or interact with live AWS resources
 
-## Quick Start
+## Quick Start (local)
+
+There is no hosted API. Use SAM local emulation (and optionally the Next.js app against that API).
 
 1. **Clone the repo**:
    ```powershell
@@ -55,7 +57,7 @@ Before running the commands below, ensure you have the following installed:
    ```powershell
    sam build
    ```
-3. **Run locally**:
+3. **Run the API locally**:
    ```powershell
    sam local start-api
    ```
@@ -91,53 +93,37 @@ npm run dev
 
 Then open `http://localhost:3000`.
 
-### GitHub Pages (static export)
+Point `NEXT_PUBLIC_API_BASE_URL` at your local SAM API (see `.env.example`) when exercising uploads end-to-end.
 
-The UI is built as a static export (`output: "export"` in `next.config.ts`) and deployed with [`.github/workflows/pages.yml`](.github/workflows/pages.yml) on pushes to `main`.
+### Static export (optional)
 
-1. In the repo **Settings → Pages**, set **Build and deployment** source to **GitHub Actions**.
-2. Add **`NEXT_PUBLIC_API_BASE_URL`** with your deployed API stage URL (for example `https://xxxxxxxx.execute-api.us-east-1.amazonaws.com/prod` — **`/prod` is correct**). Either:
-   - **Settings → Secrets and variables → Actions → Variables** (repository-wide), or
-   - **Settings → Environments → github-pages → Environment variables** (only if the workflow’s `build` job uses that environment; this repo does).
+The UI supports static export (`output: "export"` in `next.config.ts`). GitHub Pages hosting used for the public demo has been disabled. The workflow under [`.github/workflows/pages.yml`](.github/workflows/pages.yml) is kept for reference and can be run manually if you stand the API back up and re-enable Pages.
 
-   No API key is required for the public demo endpoints.
-3. Redeploy the API with your Pages origin in CORS (the browser sends only scheme + host, no path):
+## Redeploying to AWS (optional)
 
-   ```powershell
-   sam deploy --parameter-overrides CorsAllowedOrigins="http://localhost:3000,https://your-user.github.io"
-   ```
-
-The site is published at `https://your-user.github.io/meowlin/` (base path matches the repository name).
-
-## Data retention
-
-Uploaded audio files under the `uploads/` prefix in the raw audio bucket are **automatically deleted after 3 days** by default via S3 lifecycle rules (see `UploadObjectExpirationDays` in `template.yaml`). Incomplete multipart uploads under that prefix are aborted after 1 day. DynamoDB clip metadata is not removed by this rule.
-
-## Upload limits
-
-Presigned uploads are capped at **10 MiB** by default (`MaxUploadSizeBytes` in `template.yaml`; the UI describes this as 10 MB). The API accepts common audio `Content-Type` values (and any `audio/*` type) and signs the PUT for the exact `fileSize` reported by the client.
-
-`POST /uploads` is throttled at the API Gateway stage (10 requests/s steady, 20 burst by default) and rate-limited per IP with AWS WAF (100 requests per 5-minute window minimum; AWS WAF cannot go lower). `GET /clips/*` polling is also WAF rate-limited per IP (300 requests per 5-minute window by default). Tune via `ApiUploadThrottle*`, `WafUploadsRateLimitPerIp`, and `WafClipsRateLimitPerIp` in `template.yaml`.
-
-## Monitoring and cost alerts
-
-`sam deploy` creates CloudWatch alarms (API 4xx/5xx, WAF blocked requests, Lambda errors per function, S3 object count on the raw audio bucket). Alarms appear in the CloudWatch console even without email.
-
-To receive email when an alarm fires and when monthly spend crosses 80% of budget, set `AlarmNotificationEmail` (and optionally `MonthlyBudgetLimitUsd`) on deploy:
+`template.yaml` and `samconfig.toml` are IaC only — they do not incur charges while undeployed. To recreate the stack:
 
 ```powershell
-sam deploy --parameter-overrides AlarmNotificationEmail="you@example.com"
+sam build
+sam deploy
 ```
 
-After deploy, **confirm the SNS subscription** in the inbox AWS sends. Without `AlarmNotificationEmail`, alarms have no SNS action (console only).
+`samconfig.toml` expects packaging bucket `jtj-meowlin-raw-audio` (same name as the former raw-audio bucket). Create that bucket first, or change `s3_bucket` / enable `resolve_s3` before deploying.
 
-Cross-origin access is controlled by `CorsAllowedOrigins` in `template.yaml` (defaults include local dev). When hosting the UI on GitHub Pages, see [GitHub Pages (static export)](#github-pages-static-export) and redeploy with your Pages origin included, for example:
+When hosting a UI elsewhere, include its origin in CORS:
 
 ```powershell
 sam deploy --parameter-overrides CorsAllowedOrigins="http://localhost:3000,https://your-user.github.io"
 ```
 
-# Caveats
+Useful parameters (see `template.yaml`):
+
+- `UploadObjectExpirationDays` — S3 lifecycle for `uploads/` (default 3 days; incomplete multipart aborted after 1 day)
+- `MaxUploadSizeBytes` — presigned upload cap (default 10 MiB)
+- `ApiUploadThrottle*`, `WafUploadsRateLimitPerIp`, `WafClipsRateLimitPerIp` — API Gateway and WAF limits
+- `AlarmNotificationEmail`, `MonthlyBudgetLimitUsd` — CloudWatch alarm email + monthly budget (confirm the SNS subscription after deploy)
+
+## Caveats
 
 - Although the Merlin bird ID app performs audio processing in the client on the mobile device; for this demo I have shifted this work into AWS.
 - This solution relies on mock data. To truly ID cats based on their meows, it would need:

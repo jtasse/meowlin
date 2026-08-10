@@ -2,6 +2,8 @@
 
 Meowlin is a serverless AWS demo project inspired by the Merlin bird identification app, but focused on identifying likely cat breeds from recorded meows. The current project goal is to demonstrate practical AWS serverless architecture, not to implement production-grade machine learning.
 
+> **Demo status:** The hosted AWS stack and GitHub Pages site are retired (video demo only). This document describes the architecture as implemented in `template.yaml` and the local/redeploy path.
+
 The application should be built in small, working increments. The first milestone is a backend workflow that accepts a client-generated clip correlation ID, creates a server-side clip record, returns a presigned S3 upload URL, and eventually processes the uploaded audio asynchronously.
 
 ## Goals
@@ -261,7 +263,7 @@ sam local start-api
 
 Current state:
 
-- The project currently uses one deployed AWS stack/account.
+- No live AWS stack is kept running; redeploy creates one stack/account deployment from `template.yaml`.
 - API stages (`dev`, `prod`) provide route/URL and workflow separation, not full infrastructure isolation.
 - This is still useful for local-first testing and separate Postman environments.
 
